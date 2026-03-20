@@ -1,5 +1,3 @@
-# fm-tactical-interactor
-
 # FM Tactical Interactor
 
 ### A positional play analysis tool for Football Manager Mobile
