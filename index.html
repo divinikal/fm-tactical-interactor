@@ -1,0 +1,1631 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FM Tactical Interactor</title>
+<style>
+/* ═══════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════ */
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#0e0e0e;
+  color:white;
+  font-family:monospace;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  min-height:100vh;
+}
+
+/* ═══════════════════════════════════════════
+HEADER
+═══════════════════════════════════════════ */
+h2 { color:#e8c84a; letter-spacing:3px; font-size:1.1rem; margin-top:4px; }
+.subtitle { color:#444; font-size:0.58rem; letter-spacing:1.5px; text-transform:uppercase; }
+
+/* ═══════════════════════════════════════════
+TABS — Manual Build / Formation Presets
+═══════════════════════════════════════════ */
+.tabs { display:flex; gap:4px; width:min(820px,97vw); }
+.tab {
+flex:1; padding:7px; text-align:center;
+font-family:monospace; font-size:0.68rem;
+background:#1a1a1a; border:1px solid #333;
+border-radius:4px; cursor:pointer; color:#666;
+transition:all 0.15s;
+}
+.tab:hover { border-color:#666; color:#aaa; }
+.tab.active { background:#2a2a18; border-color:#e8c84a; color:#e8c84a; }
+
+/* ═══════════════════════════════════════════
+SECTIONS
+═══════════════════════════════════════════ */
+.section { width:min(820px,97vw); display:none; }
+.section.active { display:block; }
+
+/* ═══════════════════════════════════════════
+FORMATION PRESET GRID
+═══════════════════════════════════════════ */
+.preset-grid {
+display:grid;
+grid-template-columns:repeat(auto-fill,minmax(115px,1fr));
+gap:5px;
+}
+.preset-btn {
+background:#181818; border:1px solid #2a2a2a;
+border-radius:4px; padding:8px 6px;
+font-family:monospace; font-size:0.65rem; color:#888;
+cursor:pointer; text-align:center; transition:all 0.15s;
+}
+.preset-btn:hover { border-color:#e8c84a; color:#e8c84a; background:#222218; }
+.preset-btn.active { border-color:#e8c84a; color:#e8c84a; background:#222218; }
+
+/* ═══════════════════════════════════════════
+ROLE BUILDER CONTROLS
+═══════════════════════════════════════════ */
+.builder { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:6px; }
+
+select {
+background:#181818; color:white;
+border:1px solid #333; padding:6px 9px;
+font-family:monospace; font-size:0.72rem;
+border-radius:4px; cursor:pointer;
+transition:border-color 0.15s;
+}
+select:focus { outline:none; border-color:#e8c84a; }
+
+button {
+background:#181818; color:#e8c84a;
+border:1px solid #e8c84a; padding:6px 12px;
+font-family:monospace; font-size:0.72rem;
+border-radius:4px; cursor:pointer; transition:all 0.15s;
+}
+button:hover { background:#222218; }
+button.danger { color:#ff6b6b; border-color:#ff6b6b; }
+button.danger:hover { background:#221818; }
+
+/* ═══════════════════════════════════════════
+ROLE TAGS — active lineup display
+═══════════════════════════════════════════ */
+.role-list {
+display:flex; flex-wrap:wrap; gap:5px;
+min-height:28px; width:min(820px,97vw);
+}
+.role-tag {
+display:flex; align-items:center; gap:5px;
+background:#181818; border:1px solid #2a2a2a;
+border-radius:4px; padding:4px 9px;
+font-size:0.63rem; color:#ccc;
+transition:border-color 0.15s;
+}
+.role-tag:hover { border-color:#444; }
+.role-tag .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.side-badge {
+font-size:0.55rem; padding:1px 5px; border-radius:2px;
+background:#252525; color:#888; letter-spacing:0.5px;
+}
+.role-tag .rm { color:#ff6b6b; cursor:pointer; font-size:0.75rem; line-height:1; }
+.role-tag .rm:hover { color:#fff; }
+
+/* ═══════════════════════════════════════════
+MENTALITY BAR
+═══════════════════════════════════════════ */
+.mentality-bar { display:flex; gap:4px; flex-wrap:wrap; width:min(820px,97vw); }
+.men-btn {
+flex:1; min-width:78px; padding:7px 4px; text-align:center;
+font-family:monospace; font-size:0.62rem; letter-spacing:0.5px;
+border-radius:4px; cursor:pointer;
+background:#181818; border:1px solid #2a2a2a;
+color:#555; transition:all 0.15s;
+}
+.men-btn:hover { border-color:#666; color:#aaa; }
+.men-btn.active { font-weight:bold; }
+.men-btn[data-men=“Contain”].active   { background:#111a2a; border-color:#5577cc; color:#88aaff; }
+.men-btn[data-men=“Defensive”].active { background:#112211; border-color:#447744; color:#88cc88; }
+.men-btn[data-men=“Counter”].active   { background:#221133; border-color:#8855aa; color:#cc99ff; }
+.men-btn[data-men=“Control”].active   { background:#222211; border-color:#e8c84a; color:#e8c84a; }
+.men-btn[data-men=“Attacking”].active { background:#221811; border-color:#dd8855; color:#ffaa77; }
+.men-btn[data-men=“Overload”].active  { background:#221111; border-color:#ff4444; color:#ff6666; }
+
+/* Mentality description bar */
+.men-desc {
+width:min(820px,97vw);
+font-size:0.6rem; color:#555; text-align:center;
+min-height:14px; letter-spacing:0.5px;
+transition:color 0.2s;
+}
+
+/* ═══════════════════════════════════════════
+VIEW TOGGLE — Starting / IPF / OOPF
+═══════════════════════════════════════════ */
+.view-toggle { display:flex; gap:4px; width:min(820px,97vw); }
+.vtog {
+flex:1; padding:7px; text-align:center;
+font-family:monospace; font-size:0.66rem;
+background:#181818; border:1px solid #2a2a2a;
+border-radius:4px; cursor:pointer; color:#555;
+transition:all 0.15s;
+}
+.vtog:hover { border-color:#666; color:#aaa; }
+.vtog[data-v=“START”].active  { background:#222211; border-color:#e8c84a; color:#e8c84a; }
+.vtog[data-v=“IPF”].active    { background:#112211; border-color:#55cc77; color:#77ee99; }
+.vtog[data-v=“OOPF”].active   { background:#221811; border-color:#dd8844; color:#ffaa66; }
+
+/* ═══════════════════════════════════════════
+PITCH GRID
+═══════════════════════════════════════════ */
+.col-labels {
+display:grid; grid-template-columns:30% 20% 20% 30%;
+width:min(820px,97vw); text-align:center;
+font-size:0.56rem; color:#555;
+letter-spacing:1px; text-transform:uppercase;
+margin-top:4px;
+}
+
+.grid {
+width:min(820px,97vw); aspect-ratio:1.9;
+display:grid; grid-template-columns:30% 20% 20% 30%;
+grid-template-rows:repeat(3,1fr);
+border:2px solid #333; border-radius:2px;
+overflow:hidden;
+}
+
+.cell {
+border:1px solid #1e1e1e;
+display:flex; flex-direction:column;
+align-items:center; justify-content:center;
+font-size:clamp(0.75rem,2vw,1.1rem); font-weight:bold;
+color:#2a2a2a; transition:background 0.25s, color 0.25s;
+gap:2px;
+}
+
+.sub-grid {
+display:grid; grid-template-columns:48% 52%;
+grid-template-rows:repeat(3,1fr);
+border:1px solid #1e1e1e;
+}
+.sub {
+border:1px solid #181818;
+display:flex; flex-direction:column;
+align-items:center; justify-content:center;
+font-size:clamp(0.46rem,1.1vw,0.66rem); font-weight:bold;
+color:#2a2a2a; transition:background 0.25s, color 0.25s;
+gap:1px;
+}
+
+/* ── Zone colour states ──────────────────── */
+/* Starting Shape */
+.cell.sole,    .sub.sole    { background:#0d2a0d; color:#55cc77; }
+.cell.shared,  .sub.shared  { background:#2a2200; color:#e8c84a; }
+.cell.crowded, .sub.crowded { background:#2a0d0d; color:#ff6b6b; }
+.cell.dead,    .sub.dead    { background:#111122; color:#334488; }
+
+/* IPF — In Possession (green palette) */
+.cell.ipf-sole,    .sub.ipf-sole    { background:#0a2e14; color:#44dd77; }
+.cell.ipf-shared,  .sub.ipf-shared  { background:#1e2e00; color:#aadd33; }
+.cell.ipf-crowded, .sub.ipf-crowded { background:#3a1800; color:#ff9933; }
+.cell.ipf-dead,    .sub.ipf-dead    { background:#141420; color:#334488; }
+
+/* OOPF — Out of Possession (purple palette) */
+.cell.oopf-sole,    .sub.oopf-sole    { background:#160d2a; color:#aa77ff; }
+.cell.oopf-shared,  .sub.oopf-shared  { background:#2a0d20; color:#ff77cc; }
+.cell.oopf-crowded, .sub.oopf-crowded { background:#2a0808; color:#ff5555; }
+.cell.oopf-dead,    .sub.oopf-dead    { background:#141018; color:#553388; }
+
+.zone-dots {
+display:flex; flex-wrap:wrap; gap:2px;
+justify-content:center; max-width:90%;
+}
+.zdot {
+width:7px; height:7px; border-radius:50%; flex-shrink:0;
+transition:transform 0.15s;
+cursor:default;
+}
+.zdot:hover { transform:scale(1.6); }
+
+/* Zone hover tooltip */
+.cell, .sub { position:relative; cursor:default; }
+.cell:hover, .sub:hover { filter:brightness(1.25); }
+.zone-tip {
+display:none; position:absolute; bottom:calc(100% + 4px); left:50%;
+transform:translateX(-50%); background:#1a1a1a; border:1px solid #444;
+border-radius:4px; padding:4px 8px; font-size:0.58rem; color:#ccc;
+white-space:nowrap; z-index:99; pointer-events:none;
+box-shadow:0 2px 8px rgba(0,0,0,0.6);
+}
+.cell:hover .zone-tip, .sub:hover .zone-tip { display:block; }
+
+/* ═══════════════════════════════════════════
+LEGEND
+═══════════════════════════════════════════ */
+.legend { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.leg { display:flex; align-items:center; gap:4px; font-size:0.57rem; color:#555; }
+.ls { width:10px; height:10px; border-radius:2px; }
+
+/* ═══════════════════════════════════════════
+PLAYER COUNT BADGE on grid
+═══════════════════════════════════════════ */
+.zone-count {
+position:absolute; top:2px; right:3px;
+font-size:0.42rem; color:#444; font-weight:normal;
+pointer-events:none;
+}
+
+/* ═══════════════════════════════════════════
+ANALYSIS CARDS
+═══════════════════════════════════════════ */
+.analysis {
+width:min(820px,97vw);
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:7px;
+}
+.acard {
+background:#111; border:1px solid #1e1e1e;
+border-radius:6px; padding:11px 13px;
+font-size:0.64rem; line-height:1.7;
+transition:border-color 0.2s;
+}
+.acard:hover { border-color:#333; }
+.acard .atitle {
+font-size:0.56rem; text-transform:uppercase;
+letter-spacing:1.2px; margin-bottom:6px; font-weight:bold;
+}
+.acard.green  { border-color:#1a3a1a; } .acard.green  .atitle { color:#55cc77; }
+.acard.yellow { border-color:#3a3000; } .acard.yellow .atitle { color:#e8c84a; }
+.acard.red    { border-color:#3a1111; } .acard.red    .atitle { color:#ff6b6b; }
+.acard.blue   { border-color:#112233; } .acard.blue   .atitle { color:#77bbff; }
+.acard.purple { border-color:#221133; } .acard.purple .atitle { color:#bb88ff; }
+.acard ul { padding-left:13px; color:#777; }
+.acard li { margin-bottom:4px; }
+.acard li::marker { color:#444; }
+
+/* Score bar */
+.score-bar {
+height:4px; border-radius:2px; margin:6px 0 2px;
+background:#1a1a1a; overflow:hidden;
+}
+.score-fill {
+height:100%; border-radius:2px;
+transition:width 0.4s ease;
+}
+
+.empty-state { color:#2a2a2a; font-size:0.68rem; text-align:center; padding:14px; letter-spacing:0.5px; }
+.divider { width:min(820px,97vw); border:none; border-top:1px solid #181818; }
+</style>
+
+</head>
+<body>
+
+<h2>FM TACTICAL INTERACTOR</h2>
+<p class="subtitle">Build your lineup · Pick a game plan · See your shape</p>
+
+<!-- TABS -->
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('manual')">✏️ Build Manually</div>
+  <div class="tab" onclick="switchTab('preset')">📋 Use a Formation</div>
+</div>
+
+<!-- MANUAL BUILD -->
+
+<div class="section active" id="tab-manual">
+  <div class="builder">
+    <select id="sel-sector"><option value="">Position Group</option></select>
+    <select id="sel-role"><option value="">Role</option></select>
+    <select id="sel-side"><option value="">Side</option></select>
+    <button onclick="addRole()">+ Add</button>
+    <button class="danger" onclick="clearAll()">Clear All</button>
+  </div>
+</div>
+
+<!-- PRESET FORMATIONS -->
+
+<div class="section" id="tab-preset">
+  <div class="preset-grid" id="preset-grid"></div>
+</div>
+
+<!-- ACTIVE LINEUP TAGS -->
+
+<div class="role-list" id="role-list">
+  <span class="empty-state">No players added yet — build your lineup above</span>
+</div>
+
+<hr class="divider">
+
+<!-- GAME PLAN / MENTALITY -->
+
+<div class="mentality-bar">
+  <div class="men-btn" data-men="Contain"   onclick="setMentality('Contain')">Contain</div>
+  <div class="men-btn" data-men="Defensive" onclick="setMentality('Defensive')">Defensive</div>
+  <div class="men-btn" data-men="Counter"   onclick="setMentality('Counter')">Counter</div>
+  <div class="men-btn" data-men="Control"   onclick="setMentality('Control')">Control</div>
+  <div class="men-btn" data-men="Attacking" onclick="setMentality('Attacking')">Attacking</div>
+  <div class="men-btn" data-men="Overload"  onclick="setMentality('Overload')">Overload</div>
+</div>
+<div class="men-desc" id="men-desc">Pick a game plan to see how your shape changes</div>
+
+<!-- SHAPE VIEW TOGGLE -->
+
+<div class="view-toggle">
+  <div class="vtog active" data-v="START" onclick="setView('START')">⚽ Starting Shape</div>
+  <div class="vtog" data-v="IPF"   onclick="setView('IPF')">🟢 With the Ball</div>
+  <div class="vtog" data-v="OOPF"  onclick="setView('OOPF')">🟠 Without the Ball</div>
+</div>
+
+<!-- PITCH ZONE COLUMN LABELS -->
+
+<div class="col-labels">
+  <div>⚽ Attacking Third</div>
+  <div>Build-Up</div>
+  <div>Defensive Mid</div>
+  <div>🛡 Defensive Third</div>
+</div>
+
+<!-- PITCH GRID -->
+
+<div class="grid">
+  <!-- Top row -->
+  <div class="cell" id="z16"><span>16</span><div class="zone-dots" id="d16"></div><div class="zone-tip" id="t16">Zone 16 — Left flank attack</div></div>
+  <div class="cell" id="z11"><span>11</span><div class="zone-dots" id="d11"></div><div class="zone-tip" id="t11">Zone 11 — Left wide build-up</div></div>
+  <div class="cell" id="z6"><span>6</span><div class="zone-dots" id="d6"></div><div class="zone-tip" id="t6">Zone 6 — Left pre-defensive wide</div></div>
+  <div class="cell" id="z1"><span>1</span><div class="zone-dots" id="d1"></div><div class="zone-tip" id="t1">Zone 1 — Left defensive channel</div></div>
+  <!-- Middle row — penalty area sub-zones, halfspaces, pre-def mid, defensive box -->
+  <div class="sub-grid">
+    <div class="sub" id="z17a"><span>17a</span><div class="zone-dots" id="d17a"></div><div class="zone-tip" id="t17a">Zone 17a — Left pre-box channel</div></div>
+    <div class="sub" id="z17bc"><span>17b/c</span><div class="zone-dots" id="d17bc"></div><div class="zone-tip" id="t17bc">Zone 17b/c — Left wide box</div></div>
+    <div class="sub" id="z18a"><span>18a</span><div class="zone-dots" id="d18a"></div><div class="zone-tip" id="t18a">Zone 18a — Central pre-box</div></div>
+    <div class="sub" id="z18b"><span>18b</span><div class="zone-dots" id="d18b"></div><div class="zone-tip" id="t18b">Zone 18b — Six-yard box ⚡ highest xG</div></div>
+    <div class="sub" id="z19a"><span>19a</span><div class="zone-dots" id="d19a"></div><div class="zone-tip" id="t19a">Zone 19a — Right pre-box channel</div></div>
+    <div class="sub" id="z19bc"><span>19b/c</span><div class="zone-dots" id="d19bc"></div><div class="zone-tip" id="t19bc">Zone 19b/c — Right wide box</div></div>
+  </div>
+  <div class="sub-grid" style="grid-template-columns:100%;grid-template-rows:repeat(3,1fr);">
+    <div class="sub" id="z12"><span>12</span><div class="zone-dots" id="d12"></div><div class="zone-tip" id="t12">Zone 12 — Left halfspace ⚡ dangerous</div></div>
+    <div class="sub" id="z13"><span>13</span><div class="zone-dots" id="d13"></div><div class="zone-tip" id="t13">Zone 13 — Central build-up pivot</div></div>
+    <div class="sub" id="z14"><span>14</span><div class="zone-dots" id="d14"></div><div class="zone-tip" id="t14">Zone 14 — Right halfspace ⚡ dangerous</div></div>
+  </div>
+  <div class="sub-grid" style="grid-template-columns:100%;grid-template-rows:repeat(3,1fr);">
+    <div class="sub" id="z7"><span>7</span><div class="zone-dots" id="d7"></div><div class="zone-tip" id="t7">Zone 7 — Left defensive halfspace</div></div>
+    <div class="sub" id="z8"><span>8</span><div class="zone-dots" id="d8"></div><div class="zone-tip" id="t8">Zone 8 — Centre circle / DM pivot</div></div>
+    <div class="sub" id="z9"><span>9</span><div class="zone-dots" id="d9"></div><div class="zone-tip" id="t9">Zone 9 — Right defensive halfspace</div></div>
+  </div>
+  <div class="sub-grid" style="grid-template-columns:100%;grid-template-rows:repeat(3,1fr);">
+    <div class="sub" id="z2"><span>2</span><div class="zone-dots" id="d2"></div><div class="zone-tip" id="t2">Zone 2 — Left box channel / CB</div></div>
+    <div class="sub" id="z3"><span>3</span><div class="zone-dots" id="d3"></div><div class="zone-tip" id="t3">Zone 3 — GK territory</div></div>
+    <div class="sub" id="z4"><span>4</span><div class="zone-dots" id="d4"></div><div class="zone-tip" id="t4">Zone 4 — Right box channel / CB</div></div>
+  </div>
+  <!-- Bottom row -->
+  <div class="cell" id="z20"><span>20</span><div class="zone-dots" id="d20"></div><div class="zone-tip" id="t20">Zone 20 — Right flank attack</div></div>
+  <div class="cell" id="z15"><span>15</span><div class="zone-dots" id="d15"></div><div class="zone-tip" id="t15">Zone 15 — Right wide build-up</div></div>
+  <div class="cell" id="z10"><span>10</span><div class="zone-dots" id="d10"></div><div class="zone-tip" id="t10">Zone 10 — Right pre-defensive wide</div></div>
+  <div class="cell" id="z5"><span>5</span><div class="zone-dots" id="d5"></div><div class="zone-tip" id="t5">Zone 5 — Right defensive channel</div></div>
+</div>
+
+<!-- LEGEND -->
+
+<div class="legend">
+  <div class="leg"><div class="ls" style="background:#0d2a0d;border:1px solid #55cc77"></div>1 player</div>
+  <div class="leg"><div class="ls" style="background:#2a2200;border:1px solid #e8c84a"></div>2 players</div>
+  <div class="leg"><div class="ls" style="background:#2a0d0d;border:1px solid #ff6b6b"></div>Too crowded</div>
+  <div class="leg"><div class="ls" style="background:#111122;border:1px solid #334488"></div>No cover</div>
+  <div class="leg"><div class="ls" style="background:#0e0e0e;border:1px solid #222"></div>Empty</div>
+</div>
+
+<!-- ANALYSIS PANEL -->
+
+<div class="analysis" id="analysis">
+  <div class="empty-state" style="grid-column:1/-1">
+    Add at least 2 players, then pick a game plan to see your tactical analysis
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTS & ZONE MAPS
+// ═══════════════════════════════════════════════════════════════
+
+const COLORS = [
+  '#e8c84a','#7dd3f7','#f7a87d','#a8f77d','#f77dd3',
+  '#d3a8f7','#7df7c4','#f7d37d','#7db8f7','#f77d7d','#b8f77d'
+];
+
+// All zone IDs in the grid
+const ALL_ZONES = [
+  'z1','z2','z3','z4','z5',
+  'z6','z7','z8','z9','z10',
+  'z11','z12','z13','z14','z15',
+  'z16','z17a','z17bc','z18a','z18b','z19a','z19bc','z20'
+];
+
+// Left-side zones (top row of pitch grid)
+const L_ZONES = new Set(['z1','z2','z6','z7','z11','z12','z16','z17a','z17bc']);
+// Right-side zones (bottom row of pitch grid)
+const R_ZONES = new Set(['z5','z4','z10','z9','z15','z14','z20','z19a','z19bc']);
+// Centre zones (symmetric — mirror of themselves)
+// Everything not in L or R is Centre
+
+// Left ↔ Right mirror lookup
+const MIRROR = {
+  'z1':'z5',    'z5':'z1',
+  'z2':'z4',    'z4':'z2',
+  'z6':'z10',   'z10':'z6',
+  'z7':'z9',    'z9':'z7',
+  'z11':'z15',  'z15':'z11',
+  'z12':'z14',  'z14':'z12',
+  'z16':'z20',  'z20':'z16',
+  'z17a':'z19a','z19a':'z17a',
+  'z17bc':'z19bc','z19bc':'z17bc',
+  // Centre zones mirror to themselves
+  'z3':'z3','z8':'z8','z13':'z13','z18a':'z18a','z18b':'z18b',
+};
+
+// Which column (1=attack → 4=defence) each zone belongs to
+const ZONE_COL = {
+  'z16':1,'z17a':1,'z17bc':1,'z18a':1,'z18b':1,'z19a':1,'z19bc':1,'z20':1,
+  'z11':2,'z12':2,'z13':2,'z14':2,'z15':2,
+  'z6':3, 'z7':3, 'z8':3, 'z9':3, 'z10':3,
+  'z1':4, 'z2':4, 'z3':4, 'z4':4, 'z5':4,
+};
+
+// Which zones are in each column
+const COL_ZONES = {
+  1: ['z16','z17a','z17bc','z18a','z18b','z19a','z19bc','z20'],
+  2: ['z11','z12','z13','z14','z15'],
+  3: ['z6','z7','z8','z9','z10'],
+  4: ['z1','z2','z3','z4','z5'],
+};
+
+// Row assignment (1 = top, 2 = middle, 3 = bottom)
+const ZONE_ROW = {
+  'z1':1, 'z6':1, 'z11':1, 'z16':1, 'z17a':1, 'z17bc':1,
+  'z2':2, 'z3':2, 'z4':2, 'z7':2, 'z8':2, 'z9':2,
+  'z12':2,'z13':2,'z14':2,'z18a':2,'z18b':2,
+  'z5':3, 'z10':3,'z15':3,'z20':3,'z19a':3,'z19bc':3,
+};
+
+// 5-lane map for positional play width checks
+const LANE_MAP = {
+  FL: ['z1','z16','z17a','z17bc'],           // Far Left
+  LH: ['z2','z6','z7','z11','z12'],           // Left Half-space
+  C:  ['z3','z8','z13','z18a','z18b'],        // Centre
+  RH: ['z4','z9','z10','z14','z19a'],         // Right Half-space
+  FR: ['z5','z15','z19bc','z20'],             // Far Right
+};
+
+// Zones considered "defensive" (behind the ball)
+const DEF_ZONES = new Set(['z1','z2','z3','z4','z5','z6','z7','z8','z9','z10']);
+// Zones in the attacking third
+const OFF_ZONES = new Set(['z16','z17a','z17bc','z18a','z18b','z19a','z19bc','z20']);
+// Half-space zones (most dangerous areas to exploit/defend)
+const HS_ZONES  = new Set(['z7','z9','z12','z14','z17a','z19a']);
+
+// ═══════════════════════════════════════════════════════════════
+// GAME PLAN (MENTALITY) CONFIGURATION
+// ipfShift   — how many columns forward roles move when you have the ball
+// oopfDrop   — how many columns backward defenders/mids drop when you don't
+// oopfPress  — how many columns forward attackers press when you don't have it
+// ═══════════════════════════════════════════════════════════════
+const MENTALITY_CONFIG = {
+  Contain:   { ipfShift:0, oopfDrop:2,  oopfPress:-1 },
+  Defensive: { ipfShift:1, oopfDrop:1,  oopfPress:0  },
+  Counter:   { ipfShift:2, oopfDrop:1,  oopfPress:0  },
+  Control:   { ipfShift:1, oopfDrop:0,  oopfPress:0  },
+  Attacking: { ipfShift:2, oopfDrop:0,  oopfPress:1  },
+  Overload:  { ipfShift:3, oopfDrop:0,  oopfPress:2  },
+};
+
+// Human-readable descriptions for the mentality bar
+const MENTALITY_DESC = {
+  Contain:   'Park the bus. Stay deep, don\'t lose. Shape barely changes whether you have the ball or not.',
+  Defensive: 'Hard to beat. Compact block, hit on the counter when you can.',
+  Counter:   'Absorb then explode. Tight shape defensively, direct and vertical when you win it.',
+  Control:   'We\'re in charge. Patient build-up, structured possession, press at mid-high.',
+  Attacking: 'Take the game to them. Most players push forward, accept some defensive risk.',
+  Overload:  'All in. Every player as far forward as possible. You will be exposed.',
+};
+
+// ═══════════════════════════════════════════════════════════════
+// ROLE BEHAVIOUR OUT OF POSSESSION
+// def = drops backward to hold the defensive line
+// mid = holds position or drops slightly
+// att = presses forward to win the ball high
+// ═══════════════════════════════════════════════════════════════
+const OOPF_ROLE_TYPE = {
+  'GK':'def',  'SK':'def',
+  'CB':'def',  'Wide CB':'def', 'BPD':'def', 'NCB':'def', 'Sweeper':'def', 'Libero':'def',
+  'FB':'def',  'WB':'def',      'IFB':'def', 'IWB':'def', 'DFB':'def',
+  'Defensive Winger':'def',
+  'DM':'def',  'Anchor':'def',  'DM (Mid)':'def', 'Anchor (Mid)':'def',
+  'DLP':'def', 'DLP (Deep)':'def',
+  'Wide Mid':'mid', 'BWM':'mid', 'BWM (Mid)':'mid', 'RPM':'mid', 'RPM (Deep)':'mid',
+  'BBM':'mid', 'BBM (Deep)':'mid', 'CM':'mid', 'AP':'mid',
+  'Winger':'mid', 'Inverted Winger':'mid',
+  'AM':'att',  'Shadow Striker':'att', 'Trequartista':'att',
+  'AP (Wing)':'att', 'Inside Forward':'att', 'Advanced Forward':'att', 'Pressing Forward':'att',
+  'Poacher':'att', 'Target Forward':'att', 'Deep Lying Forward':'att', 'Complete Forward':'att',
+};
+
+// ═══════════════════════════════════════════════════════════════
+// ROLE MOBILITY — how much a role responds to mentality shifts
+// 1 = low (stays in position), 2 = medium, 3 = high (roams freely)
+// ═══════════════════════════════════════════════════════════════
+const MOBILITY = {
+  'GK':1,  'SK':1,
+  'CB':1,  'Wide CB':2, 'BPD':2,  'NCB':1,  'Sweeper':2, 'Libero':3,
+  'FB':2,  'WB':3,      'IFB':2,  'IWB':3,  'DFB':1,
+  'Winger':2, 'Inverted Winger':2, 'Wide Mid':3, 'Defensive Winger':1,
+  'DM':1,  'Anchor':1,  'DM (Mid)':1,  'Anchor (Mid)':1,
+  'DLP':2, 'DLP (Deep)':2,
+  'BBM':3, 'BBM (Deep)':3,
+  'RPM':3, 'RPM (Deep)':3,
+  'BWM':3, 'BWM (Mid)':3,
+  'CM':2,  'AP':2,
+  'AM':2,  'Shadow Striker':2, 'Trequartista':3,
+  'AP (Wing)':2, 'Inside Forward':2, 'Advanced Forward':2, 'Pressing Forward':3,
+  'Poacher':1, 'Target Forward':1, 'Deep Lying Forward':2, 'Complete Forward':3,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// POSITIONAL FLOORS & CEILINGS
+// Floors: how far forward a role can drift OUT OF POSSESSION
+// Ceilings: how far forward a role can push IN POSSESSION
+// (Higher column number = more defensive)
+// ═══════════════════════════════════════════════════════════════
+const OOPF_FLOOR = {
+  'GK':4,  'SK':4,
+  'CB':4,  'Wide CB':4, 'BPD':4, 'NCB':4, 'Sweeper':4, 'Libero':3,
+  'FB':4,  'WB':3,  'IFB':4, 'IWB':3, 'DFB':4,
+  'DM':3,  'Anchor':3, 'DM (Mid)':3, 'Anchor (Mid)':3,
+  'DLP (Deep)':3,
+  'Defensive Winger':3,
+  // Midfielders hold their shape
+  'Wide Mid':3, 'BWM':3, 'BWM (Mid)':3,
+  'RPM':2,  'RPM (Deep)':2,
+  'BBM':2,  'BBM (Deep)':2,
+  'CM':2,   'AP':2, 'DLP':2,
+  'Winger':2, 'Inverted Winger':2,
+  // Attackers press high — don't drop below pre-offensive
+  'AM':1, 'Shadow Striker':1, 'Trequartista':1,
+  'AP (Wing)':1, 'Inside Forward':1, 'Advanced Forward':1, 'Pressing Forward':1,
+  'Poacher':1, 'Target Forward':1, 'Deep Lying Forward':2, 'Complete Forward':1,
+};
+
+const IPF_CEILING = {
+  // GK stays back, SK can sweep
+  'GK':4,  'SK':3,
+  // CBs push into pre-def at most
+  'CB':3,  'Wide CB':3, 'NCB':3, 'BPD':3, 'Sweeper':2, 'Libero':2,
+  'DFB':3,
+  // Fullbacks and wing-backs push forward
+  'FB':2, 'WB':1, 'IFB':2, 'IWB':2,
+  // Wide roles push into attack
+  'Winger':1, 'Inverted Winger':1, 'Wide Mid':2, 'Defensive Winger':3,
+  // Holding mids stay back
+  'DM':3, 'Anchor':3, 'DM (Mid)':3, 'Anchor (Mid)':3,
+  'DLP':2, 'DLP (Deep)':3,
+  'BBM':1, 'BBM (Deep)':2,
+  'RPM':1, 'RPM (Deep)':2,
+  'BWM':2, 'BWM (Mid)':2,
+  'CM':2, 'AP':1,
+  // Attackers push all the way
+  'AM':1, 'Shadow Striker':1, 'Trequartista':1,
+  'AP (Wing)':1, 'Inside Forward':1, 'Advanced Forward':1, 'Pressing Forward':1,
+  'Poacher':1, 'Target Forward':1, 'Deep Lying Forward':1, 'Complete Forward':1,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// LIKELIHOOD CALCULATION
+// How confident we are that a role actually reaches its
+// shifted zones. Driven by: mobility × mentality intensity × discipline
+// ═══════════════════════════════════════════════════════════════
+const MENTALITY_INTENSITY = {
+  Contain:0.4, Defensive:0.6, Counter:0.75, Control:0.7, Attacking:0.85, Overload:1.0
+};
+
+// Discipline: how reliably a role follows positional instructions
+// High = structured/disciplined, Low = free role/roamer
+const DISCIPLINE = {
+  'GK':0.98,  'SK':0.92,
+  'CB':0.92,  'Wide CB':0.88, 'BPD':0.82,  'NCB':0.96,  'Sweeper':0.78, 'Libero':0.65,
+  'FB':0.85,  'WB':0.88,      'IFB':0.84,  'IWB':0.80,  'DFB':0.94,
+  'Winger':0.82, 'Inverted Winger':0.80, 'Wide Mid':0.88, 'Defensive Winger':0.92,
+  'DM':0.92,  'Anchor':0.97,  'DM (Mid)':0.90,  'Anchor (Mid)':0.95,
+  'DLP':0.88, 'DLP (Deep)':0.90,
+  'BBM':0.75, 'BBM (Deep)':0.78,
+  'RPM':0.68, 'RPM (Deep)':0.70,
+  'BWM':0.78, 'BWM (Mid)':0.76,
+  'CM':0.84,  'AP':0.76,
+  'AM':0.80,  'Shadow Striker':0.76, 'Trequartista':0.60,
+  'AP (Wing)':0.76, 'Inside Forward':0.78, 'Advanced Forward':0.82, 'Pressing Forward':0.72,
+  'Poacher':0.97, 'Target Forward':0.94, 'Deep Lying Forward':0.78, 'Complete Forward':0.72,
+};
+
+// ═══════════════════════════════════════════════════════════════
+// ROLE DATA
+// Each role has: home zones, movement zones, occasional zones, valid sides
+// All zones defined from LEFT perspective — Right roles get mirrored automatically
+// ═══════════════════════════════════════════════════════════════
+const SECTORS = {
+  "Goalkeeper": {
+    "GK": { home:['z3'], moves:[], okay:['z2'], sides:['C'] },
+    // SK sweeps wide — Centre expansion handles both sides
+    "SK": { home:['z3'], moves:['z2','z7','z8'], okay:[], sides:['C'] },
+  },
+  "Centre Back": {
+    // CB home is z2 (Left perspective) — Right CB gets z4 via mirror, Centre CB gets both via expansion
+    "CB":      { home:['z2'],     moves:['z7'],               okay:['z3'],             sides:['L','C','R'] },
+    "Wide CB": { home:['z2'],     moves:['z1','z7'],           okay:['z6'],             sides:['L','R'] },
+    "BPD":     { home:['z2'],     moves:['z7','z8'],           okay:['z3','z12'],       sides:['L','C','R'] },
+    "NCB":     { home:['z2'],     moves:['z7'],                okay:['z3'],             sides:['L','C','R'] },
+    "Sweeper": { home:['z3'],     moves:['z2','z7','z8'],      okay:['z12','z13'],      sides:['L','C','R'] },
+    "Libero":  { home:['z3'],     moves:['z2','z7','z8'],      okay:['z11','z12','z13'], sides:['L','C','R'] },
+  },
+  "Fullback": {
+    "FB":  { home:['z2'],      moves:['z6','z11'],      okay:['z1'],        sides:['L','R'] },
+    "WB":  { home:['z1','z6'], moves:['z11','z16'],     okay:['z17a'],      sides:['L','R'] },
+    "IFB": { home:['z2'],      moves:['z7','z12'],      okay:['z8','z13'],  sides:['L','R'] },
+    "IWB": { home:['z6'],      moves:['z12','z8','z13'],okay:['z11','z1'],  sides:['L','R'] },
+    "DFB": { home:['z2'],      moves:['z1','z6'],       okay:['z7'],        sides:['L','R'] },
+  },
+  "Flanker": {
+    "Winger":           { home:['z11'], moves:['z16','z17a'],  okay:['z12'],      sides:['L','R'] },
+    "Inverted Winger":  { home:['z11'], moves:['z12','z17bc'], okay:['z8','z13'], sides:['L','R'] },
+    "Wide Mid":         { home:['z11'], moves:['z12','z6'],    okay:['z16','z7'], sides:['L','R'] },
+    "Defensive Winger": { home:['z6'],  moves:['z11','z1'],    okay:['z7'],       sides:['L','R'] },
+  },
+  "Flanker Def Mid": {
+    // WB: owns the wide channel, bombs forward — never cuts inside
+    "WB":  { home:['z6'],  moves:['z11','z16'],  okay:['z17a'],        sides:['L','R'] },
+    // IWB: owns the wide channel, inverts into halfspace — never goes deep central
+    "IWB": { home:['z6'],  moves:['z7','z12'],   okay:['z8','z13'],    sides:['L','R'] },
+  },
+  "DM": {
+    "DM":         { home:['z8'], moves:['z7'],             okay:['z2','z6','z11'],  sides:['L','C','R'] },
+    "Anchor":     { home:['z8'], moves:['z7'],             okay:['z6','z11'],       sides:['L','C','R'] },
+    "DLP (Deep)": { home:['z8'], moves:['z7'],             okay:['z13','z12','z6','z11'], sides:['L','C','R'] },
+    "BBM (Deep)": { home:['z8'], moves:['z13','z7'],       okay:['z12','z2','z6','z11'],  sides:['L','C','R'] },
+    "RPM (Deep)": { home:['z8'], moves:['z7','z13','z12'], okay:['z6','z11'],       sides:['L','C','R'] },
+    "BWM":        { home:['z8'], moves:['z7','z6','z11'],  okay:['z2'],             sides:['L','C','R'] },
+  },
+  "Central Mid": {
+    "CM":         { home:['z12','z13'], moves:['z11','z8'],      okay:['z7','z17a','z6'],          sides:['L','C','R'] },
+    "AP":         { home:['z13','z12'], moves:['z17a','z17bc'],  okay:['z18a','z6','z11'],         sides:['L','C','R'] },
+    "DLP":        { home:['z8','z13'],  moves:['z7'],            okay:['z12','z6','z11'],          sides:['L','C','R'] },
+    "BBM":        { home:['z12','z13'], moves:['z17a','z7'],     okay:['z18a','z2','z6','z11'],    sides:['L','C','R'] },
+    "DM (Mid)":   { home:['z8','z13'],  moves:['z7','z12'],      okay:['z6','z11'],                sides:['L','C','R'] },
+    "RPM":        { home:['z12','z13'], moves:['z17a','z11'],    okay:['z16','z18a','z6'],         sides:['L','C','R'] },
+    "Anchor (Mid)":{ home:['z8','z13'], moves:['z7'],            okay:['z6','z11'],                sides:['L','C','R'] },
+    "BWM (Mid)":  { home:['z12','z13'], moves:['z7','z6','z11'], okay:[],                          sides:['L','C','R'] },
+  },
+  "Wing Attack": {
+    "Winger":          { home:['z16'], moves:['z17a'],            okay:['z11','z12'],       sides:['L','R'] },
+    "Inverted Winger": { home:['z16'], moves:['z17a','z17bc'],    okay:['z18a','z12'],      sides:['L','R'] },
+    "Inside Forward":  { home:['z16'], moves:['z17bc','z18b'],    okay:['z18a','z17a','z12'], sides:['L','R'] },
+    "AP (Wing)":       { home:['z16'], moves:['z17a','z12'],      okay:['z17bc','z18a'],    sides:['L','R'] },
+  },
+  "Central Attack": {
+    // All defined Left-perspective — Right versions get mirrored, Centre gets expanded
+    "AM":             { home:['z17a','z18a'], moves:['z17bc','z18b'],      okay:['z12','z13'],    sides:['L','C','R'] },
+    "AP":             { home:['z17a','z18a'], moves:['z12','z13'],          okay:['z17bc','z18b','z11'], sides:['L','C','R'] },
+    "Shadow Striker": { home:['z17a','z18a'], moves:['z17bc','z18b'],      okay:['z12','z13'],    sides:['L','C','R'] },
+    "Trequartista":   { home:['z17a','z18a'], moves:['z11','z12','z13','z17bc'], okay:['z18b'],   sides:['L','C','R'] },
+  },
+  "Wide Striker": {
+    "Inside Forward":   { home:['z17bc'], moves:['z18b','z17a'],  okay:['z16','z12'], sides:['L','R'] },
+    "Advanced Forward": { home:['z17bc'], moves:['z18b','z16'],   okay:['z17a'],      sides:['L','R'] },
+    "Pressing Forward": { home:['z17bc'], moves:['z16','z11'],    okay:['z17a','z12'], sides:['L','R'] },
+  },
+  "Central Striker": {
+    // Symmetric strikers — Centre expansion handles both sides, Left/Right get mirrored
+    "Poacher":            { home:['z18b'],      moves:['z17bc'],                   okay:[],                   sides:['L','C','R'] },
+    "Advanced Forward":   { home:['z17bc','z18b'], moves:['z16'],                  okay:['z17a'],             sides:['L','C','R'] },
+    "Pressing Forward":   { home:['z17a','z18a'], moves:['z12','z13','z7','z8'],   okay:['z17bc','z18b'],     sides:['L','C','R'] },
+    "Target Forward":     { home:['z18b'],      moves:['z17bc','z17a'],            okay:['z13'],              sides:['L','C','R'] },
+    "Trequartista":       { home:['z17a','z18a'], moves:['z11','z12','z13'],       okay:['z17bc','z18b'],     sides:['L','C','R'] },
+    "Deep Lying Forward": { home:['z17a','z18a'], moves:['z12','z13'],             okay:['z11','z17bc','z18b'], sides:['L','C','R'] },
+    "Complete Forward":   { home:['z17bc','z18b'], moves:['z16','z17a'],           okay:['z12'],              sides:['L','C','R'] },
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════
+// FORMATION PRESETS — [sector, role, side]
+// ═══════════════════════════════════════════════════════════════
+const PRESETS = {
+  '4-4-2': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['Flanker','Wide Mid','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Flanker','Wide Mid','R'],
+    ['Central Striker','Advanced Forward','L'],['Central Striker','Advanced Forward','R'],
+  ],
+  '4-4-2 Diamond': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['DM','DM','C'],['Central Mid','CM','L'],['Central Mid','CM','R'],
+    ['Central Attack','AP','C'],
+    ['Central Striker','Advanced Forward','L'],['Central Striker','Advanced Forward','R'],
+  ],
+  '4-3-3': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['Central Mid','CM','L'],['DM','Anchor','C'],['Central Mid','CM','R'],
+    ['Wing Attack','Winger','L'],['Central Striker','Complete Forward','C'],['Wing Attack','Winger','R'],
+  ],
+  '4-2-3-1': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['DM','DM','L'],['DM','DM','R'],
+    ['Wing Attack','Winger','L'],['Central Attack','AM','C'],['Wing Attack','Winger','R'],
+    ['Central Striker','Advanced Forward','C'],
+  ],
+  '4-1-4-1': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['DM','Anchor','C'],
+    ['Flanker','Wide Mid','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Flanker','Wide Mid','R'],
+    ['Central Striker','Deep Lying Forward','C'],
+  ],
+  '4-5-1': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['Flanker','Wide Mid','L'],['Central Mid','CM','L'],['DM','DM','C'],['Central Mid','CM','R'],['Flanker','Wide Mid','R'],
+    ['Central Striker','Target Forward','C'],
+  ],
+  '4-3-2-1': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['Central Mid','CM','L'],['DM','DM','C'],['Central Mid','CM','R'],
+    ['Central Attack','Shadow Striker','L'],['Central Attack','Shadow Striker','R'],
+    ['Central Striker','Advanced Forward','C'],
+  ],
+  '3-5-2': [
+    ['Goalkeeper','GK','C'],
+    ['Centre Back','Wide CB','L'],['Centre Back','CB','C'],['Centre Back','Wide CB','R'],
+    ['Fullback','WB','L'],['Central Mid','CM','L'],['DM','Anchor','C'],['Central Mid','CM','R'],['Fullback','WB','R'],
+    ['Central Striker','Advanced Forward','L'],['Central Striker','Advanced Forward','R'],
+  ],
+  '3-4-3': [
+    ['Goalkeeper','GK','C'],
+    ['Centre Back','Wide CB','L'],['Centre Back','CB','C'],['Centre Back','Wide CB','R'],
+    ['Fullback','WB','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Fullback','WB','R'],
+    ['Wing Attack','Winger','L'],['Central Striker','Complete Forward','C'],['Wing Attack','Winger','R'],
+  ],
+  '3-4-2-1': [
+    ['Goalkeeper','GK','C'],
+    ['Centre Back','Wide CB','L'],['Centre Back','CB','C'],['Centre Back','Wide CB','R'],
+    ['Fullback','WB','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Fullback','WB','R'],
+    ['Central Attack','Shadow Striker','L'],['Central Attack','Shadow Striker','R'],
+    ['Central Striker','Advanced Forward','C'],
+  ],
+  '3-3-3-1': [
+    ['Goalkeeper','GK','C'],
+    ['Centre Back','Wide CB','L'],['Centre Back','CB','C'],['Centre Back','Wide CB','R'],
+    ['Central Mid','CM','L'],['DM','DM','C'],['Central Mid','CM','R'],
+    ['Wing Attack','Inside Forward','L'],['Central Attack','AM','C'],['Wing Attack','Inside Forward','R'],
+    ['Central Striker','Advanced Forward','C'],
+  ],
+  '3-1-4-2': [
+    ['Goalkeeper','GK','C'],
+    ['Centre Back','Wide CB','L'],['Centre Back','CB','C'],['Centre Back','Wide CB','R'],
+    ['DM','Anchor','C'],
+    ['Flanker','Wide Mid','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Flanker','Wide Mid','R'],
+    ['Central Striker','Advanced Forward','L'],['Central Striker','Advanced Forward','R'],
+  ],
+  '5-3-2': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','WB','L'],['Centre Back','CB','L'],['Centre Back','CB','C'],['Centre Back','CB','R'],['Fullback','WB','R'],
+    ['Central Mid','CM','L'],['DM','Anchor','C'],['Central Mid','CM','R'],
+    ['Central Striker','Advanced Forward','L'],['Central Striker','Advanced Forward','R'],
+  ],
+  '5-4-1': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','WB','L'],['Centre Back','CB','L'],['Centre Back','CB','C'],['Centre Back','CB','R'],['Fullback','WB','R'],
+    ['Flanker','Wide Mid','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Flanker','Wide Mid','R'],
+    ['Central Striker','Deep Lying Forward','C'],
+  ],
+  '5-2-3': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','WB','L'],['Centre Back','CB','L'],['Centre Back','CB','C'],['Centre Back','CB','R'],['Fullback','WB','R'],
+    ['Central Mid','CM','L'],['Central Mid','CM','R'],
+    ['Wing Attack','Winger','L'],['Central Striker','Complete Forward','C'],['Wing Attack','Winger','R'],
+  ],
+};
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let activeRoles   = [];
+let colorIdx      = 0;
+let currentMentality = null;
+let currentView   = 'START';
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+
+// Returns 'L', 'R', or 'C' for a zone
+function zoneLane(z) {
+  if(L_ZONES.has(z)) return 'L';
+  if(R_ZONES.has(z)) return 'R';
+  return 'C';
+}
+
+// True if a zone is neither Left nor Right — i.e. central
+function isCenter(z) {
+  return !L_ZONES.has(z) && !R_ZONES.has(z);
+}
+
+// Zones used for GRID DISPLAY — home and moves only (okay = too occasional to show as dots)
+function getRoleZones(r) {
+  return [...new Set([...r.home, ...r.moves])];
+}
+
+// Zones used for COVERAGE STATS and AUDIT — includes occasional okay zones
+function getRoleZonesFull(r) {
+  return [...new Set([...r.home, ...r.moves, ...(r.okay || [])])];
+}
+
+// Apply Left/Right/Centre mirroring when a role is placed on a side
+// Centre roles expand L-biased zones to include their mirror (symmetric coverage)
+function applySlot(zones, side) {
+  if(side === 'L') return zones;
+  if(side === 'R') return zones.map(z => MIRROR[z] || z);
+  // Centre: include both sides for asymmetric zones
+  const expanded = new Set();
+  zones.forEach(z => {
+    expanded.add(z);
+    const m = MIRROR[z];
+    if(m && m !== z) expanded.add(m);
+  });
+  return [...expanded];
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ZONE SHIFTING
+// Moves a single zone forward or backward by col columns
+// Respects positional floors (OOPF) and ceilings (IPF)
+// ═══════════════════════════════════════════════════════════════
+// True if a zone is a halfspace (the most dangerous channels)
+function isHalfSpace(z) {
+  return z === 'z7' || z === 'z9' || z === 'z12' || z === 'z14';
+}
+
+// How strictly a role is bound to its lane during zone shifts
+// wide_locked  = stays on its flank, never drifts central
+// halfspace    = flank + halfspace only
+// free         = flank + centre (default behaviour)
+// center_locked= centre only regardless of side
+const ROLE_LANE_BEHAVIOR = {
+  'WB':'wide_locked',   'Defensive Winger':'wide_locked',
+  'Wide CB':'halfspace', 'IWB':'halfspace',
+  'FB':'free',          'DFB':'free',
+  'Winger':'free',      'Inverted Winger':'halfspace',
+  'Wide Mid':'free',    'Inside Forward':'halfspace',
+  'AP (Wing)':'halfspace',
+  'Anchor':'center_locked', 'DM':'center_locked', 'DM (Mid)':'center_locked',
+  'Anchor (Mid)':'center_locked',
+  // CBs on flanks naturally play into halfspace
+  'CB':'halfspace', 'BPD':'halfspace', 'NCB':'halfspace',
+};
+
+
+// Moves a zone forward/backward by cols columns.
+// roleSide enforces strict lane containment:
+//   Left  → can only land in Left or Centre zones
+//   Right → can only land in Right or Centre zones
+//   Centre → preserves the original zone's own lane (L→L, R→R, C→C)
+function shiftZone(z, cols, roleName, view, roleSide) {
+  const col = ZONE_COL[z];
+  if(!col) return z;
+
+  // forward = positive shift → lower column number
+  let newCol = col - cols;
+  newCol = Math.max(1, Math.min(4, newCol));
+
+  if(view === 'OOPF') {
+    const floor = OOPF_FLOOR[roleName];
+    if(floor !== undefined) newCol = Math.max(newCol, floor);
+  }
+
+  if(view === 'IPF') {
+    const ceiling = IPF_CEILING[roleName];
+    if(ceiling !== undefined) newCol = Math.min(newCol, ceiling);
+  }
+
+  if(newCol === col) return z;
+
+  let targetFilter;
+  const behavior = ROLE_LANE_BEHAVIOR[roleName];
+
+  if(roleSide === 'L') {
+    if(behavior === 'wide_locked')   targetFilter = nz => L_ZONES.has(nz);
+    else if(behavior === 'halfspace') targetFilter = nz => L_ZONES.has(nz) || isHalfSpace(nz);
+    else if(behavior === 'center_locked') targetFilter = nz => isCenter(nz);
+    else                             targetFilter = nz => L_ZONES.has(nz) || isCenter(nz);
+  } else if(roleSide === 'R') {
+    if(behavior === 'wide_locked')   targetFilter = nz => R_ZONES.has(nz);
+    else if(behavior === 'halfspace') targetFilter = nz => R_ZONES.has(nz) || isHalfSpace(nz);
+    else if(behavior === 'center_locked') targetFilter = nz => isCenter(nz);
+    else                             targetFilter = nz => R_ZONES.has(nz) || isCenter(nz);
+  } else {
+    // Centre role: preserve original lane
+    if(L_ZONES.has(z))      targetFilter = nz => L_ZONES.has(nz);
+    else if(R_ZONES.has(z)) targetFilter = nz => R_ZONES.has(nz);
+    else                    targetFilter = nz => isCenter(nz);
+  }
+
+  const targets = COL_ZONES[newCol].filter(targetFilter);
+  return targets[0] || z;
+}
+
+// ── getShiftedZones ───────────────────────────────────────────
+function getShiftedZones(role, shiftCols, view) {
+  const mobility = MOBILITY[role.role] || 2;
+  let actualShift;
+
+  if(view === 'OOPF') {
+    const cfg  = MENTALITY_CONFIG[currentMentality];
+    const type = OOPF_ROLE_TYPE[role.role] || 'mid';
+    if(type === 'def')      actualShift = -Math.round(cfg.oopfDrop * (mobility / 3));
+    else if(type === 'att') actualShift =  Math.round(cfg.oopfPress * (mobility / 3));
+    else                    actualShift = -Math.round((cfg.oopfDrop * 0.4) * (mobility / 3));
+  } else {
+    actualShift = Math.round(shiftCols * (mobility / 3));
+  }
+
+  const side = role.side;
+  const sideOk = z => {
+    if(side === 'L') return L_ZONES.has(z) || isCenter(z);
+    if(side === 'R') return R_ZONES.has(z) || isCenter(z);
+    return true;
+  };
+
+  const baseZones    = getRoleZones(role).filter(sideOk);
+  const filteredHome = role.home.filter(sideOk);
+  const shifted      = baseZones.map(z => shiftZone(z, actualShift, role.role, view, side));
+  return [...new Set([...filteredHome, ...shifted])];
+}
+
+// Get display zones for all roles based on current view and mentality
+function getDisplayZones() {
+  const sideOk = (z, side) => {
+    if(side === 'L') return L_ZONES.has(z) || isCenter(z);
+    if(side === 'R') return R_ZONES.has(z) || isCenter(z);
+    return true;
+  };
+
+  if(currentView === 'START' || !currentMentality)
+    return activeRoles.map(r => ({ r, zones: getRoleZones(r).filter(z => sideOk(z, r.side)) }));
+  const cfg = MENTALITY_CONFIG[currentMentality];
+  if(currentView === 'OOPF')
+    return activeRoles.map(r => ({ r, zones: getShiftedZones(r, 0, 'OOPF') }));
+  return activeRoles.map(r => ({ r, zones: getShiftedZones(r, cfg.ipfShift, 'IPF') }));
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LIKELIHOOD CALCULATION
+// % chance a role actually reaches its shifted zones
+// ═══════════════════════════════════════════════════════════════
+function calcLikelihood(role, view) {
+  if(!currentMentality || view === 'START') return null;
+  const mobility    = MOBILITY[role.role]   || 2;
+  const intensity   = MENTALITY_INTENSITY[currentMentality] || 0.6;
+  const discipline  = DISCIPLINE[role.role] || 0.80;
+  const cfg = MENTALITY_CONFIG[currentMentality];
+
+  let actualShift;
+  if(view === 'OOPF') {
+    const type = OOPF_ROLE_TYPE[role.role] || 'mid';
+    if(type === 'def')      actualShift = -Math.round(cfg.oopfDrop   * (mobility/3));
+    else if(type === 'att') actualShift =  Math.round(cfg.oopfPress  * (mobility/3));
+    else                    actualShift = -Math.round((cfg.oopfDrop * 0.4) * (mobility/3));
+  } else {
+    actualShift = Math.round(cfg.ipfShift * (mobility/3));
+  }
+
+  // Low-mobility roles (GK, CB, Anchor, Poacher) barely move — high floor
+  if(mobility === 1) return Math.min(97, Math.round(80 + discipline * 17));
+  // No shift at all — role stays in home zones, near certain
+  if(actualShift === 0) return Math.min(97, Math.round(72 + discipline * 25));
+
+  const mobilityFactor = 0.5 + (mobility / 3) * 0.5;
+  const shiftPenalty   = Math.max(0, (Math.abs(actualShift) - 1) * 0.07);
+  const raw = discipline * intensity * mobilityFactor * (1 - shiftPenalty);
+  return Math.min(95, Math.max(25, Math.round(raw * 100)));
+}
+
+function likelihoodColor(pct) {
+  if(pct >= 70) return '#55cc77';
+  if(pct >= 45) return '#e8c84a';
+  return '#ff8855';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// POSITIONAL PLAY AUDIT
+// Checks shape against positional play principles
+// View-aware: different rules apply in/out of possession
+// ═══════════════════════════════════════════════════════════════
+function getSideCounts(zoneRoles) {
+  const leftZones  = ['z16','z11','z6','z1','z17a','z17bc','z18a','z19a'];
+  const rightZones = ['z20','z15','z10','z5','z19a','z19bc','z18a','z17a'];
+  let left = 0, right = 0;
+  leftZones.forEach(z  => left  += zoneRoles[z]?.length || 0);
+  rightZones.forEach(z => right += zoneRoles[z]?.length || 0);
+  return { left, right };
+}
+
+function countColumn(zoneRoles, colZones) {
+  return colZones.reduce((sum, z) => sum + (zoneRoles[z]?.length || 0), 0);
+}
+
+// True if both attacking flanks have at least one player
+function hasEffectiveWidth(zoneRoles) {
+  const leftWide  = ['z16','z17a','z17bc','z18a','z19a','z20'];
+  const rightWide = ['z1','z2','z3','z4','z5'];
+  const left  = leftWide.some(z  => (zoneRoles[z]?.length || 0) > 0);
+  const right = rightWide.some(z => (zoneRoles[z]?.length || 0) > 0);
+  return left && right;
+}
+
+// Returns true if a lane is overloaded above max
+function capLane(zoneRoles, laneZones, max = 2) {
+  const count = laneZones.reduce((s, z) => s + (zoneRoles[z]?.length || 0), 0);
+  return count > max;
+}
+
+function runPositionalAudit(displayZonesList, view) {
+  const issues = [];
+  const passes = [];
+
+  // Label lookups
+  const COL_N  = {1:'Attacking',2:'Build-Up',3:'Mid-Block',4:'Defensive'};
+  const LANE_N = {L:'Left', C:'Centre', R:'Right'};
+  const ROW_N  = {1:'Top', 2:'Middle', 3:'Bottom'};
+  const LANE_LABELS = {
+    FL:'Far Left', LH:'Left Half-space', C:'Centre',
+    RH:'Right Half-space', FR:'Far Right'
+  };
+
+  // Exclude GK/SK from tactical shape checks (they're always in the defensive column)
+  const nonGK = displayZonesList.filter(({r}) => r.role !== 'GK' && r.role !== 'SK');
+
+  // Build zone → roles map
+  const zoneRoles = {};
+  ALL_ZONES.forEach(z => zoneRoles[z] = []);
+  nonGK.forEach(({r, zones}) => zones.forEach(z => { if(zoneRoles[z]) zoneRoles[z].push(r); }));
+
+  // ── Rule 1: No more than 2 players in the same vertical lane ─
+  const laneCounts = {};
+  nonGK.forEach(({r, zones}) => {
+    const seen = new Set();
+    zones.forEach(z => {
+      const key = `${ZONE_COL[z]}-${zoneLane(z)}`;
+      if(!seen.has(key)) {
+        seen.add(key);
+        if(!laneCounts[key]) laneCounts[key] = [];
+        laneCounts[key].push(r);
+      }
+    });
+  });
+  const laneViolations = Object.entries(laneCounts).filter(([,roles]) => roles.length > 2);
+  if(laneViolations.length > 0) {
+    laneViolations.forEach(([key, roles]) => {
+      const [col, lane] = key.split('-');
+      issues.push(`⚠️ ${LANE_N[lane]} ${COL_N[col]} — ${roles.length} players in the same corridor. Max is 2. They'll just get in each other's way.`);
+    });
+  } else {
+    passes.push('✅ No corridor is too crowded (max 2 per lane)');
+  }
+
+  // ── Rule 2: All 5 lanes occupied — in possession only ────────
+  if(view === 'IPF') {
+    const emptyLanes = Object.entries(LANE_MAP)
+      .filter(([, zones]) => zones.every(z => (zoneRoles[z]?.length || 0) === 0))
+      .map(([l]) => LANE_LABELS[l]);
+    if(emptyLanes.length > 0) {
+      issues.push(`⚠️ Nobody covering: ${emptyLanes.join(', ')}. The pitch has 5 lanes — you should use all of them to stretch the opposition.`);
+    } else {
+      passes.push('✅ All 5 width lanes are being used');
+    }
+  }
+
+  // ── Rule 4: Shape must have players on all 3 horizontal lines ─
+  const rowOcc = {1:false, 2:false, 3:false};
+  nonGK.forEach(({zones}) => zones.forEach(z => {
+    if(ZONE_ROW[z]) rowOcc[ZONE_ROW[z]] = true;
+  }));
+  const emptyRows = Object.entries(rowOcc).filter(([,v]) => !v).map(([r]) => ROW_N[r]);
+  if(emptyRows.length > 0) {
+    issues.push(`⚠️ Shape is flat — no one in the ${emptyRows.join(', ')} line. You need players at different depths or the opposition will press you easily.`);
+  } else {
+    passes.push('✅ Players spread across all 3 depth lines — good stagger');
+  }
+
+  // ── Rule 5: Rest defence — players must stay behind the ball ─
+  const minDef = view === 'OOPF' ? 3 : 2;
+  const defPlayers = nonGK.filter(({zones}) => zones.some(z => DEF_ZONES.has(z)));
+  if(defPlayers.length < minDef) {
+    issues.push(`⚠️ Only ${defPlayers.length} player(s) staying back — you need at least ${minDef} ${view === 'OOPF' ? 'when you don\'t have the ball' : 'even in possession'}. One counter-attack and you\'re done.`);
+  } else {
+    passes.push(`✅ ${defPlayers.length} players staying back — defence isn't exposed`);
+  }
+
+  // ── Rule 9: No zone should have 3+ players ───────────────────
+  const crowdedZones = ALL_ZONES.filter(z => (zoneRoles[z]?.length || 0) >= 3);
+  if(crowdedZones.length > 0) {
+    crowdedZones.forEach(z => {
+      issues.push(`⚠️ Zone ${z.replace('z','')} has ${(zoneRoles[z]||[]).length} players in it — ${(zoneRoles[z] || []).map(r=>r.role+'('+r.side+')').join(', ')}. That\'s a traffic jam.`);
+    });
+  } else {
+    passes.push('✅ No zone has 3+ players stacking in it');
+  }
+
+  // ── Rule 10: Both flanks must have width coverage — IPF only ─
+  if(view === 'IPF') {
+    const lCov = ['z16','z11','z6','z1'].some(z => (zoneRoles[z]?.length || 0) > 0);
+    const rCov = ['z20','z15','z10','z5'].some(z => (zoneRoles[z]?.length || 0) > 0);
+    if(!lCov && !rCov) {
+      issues.push('⚠️ Both flanks are empty — your shape has zero width. The opposition will just pack the middle and stop you easily.');
+    } else if(!lCov) {
+      issues.push('⚠️ Nobody on the left flank — you have no width on that side. Easy to defend against.');
+    } else if(!rCov) {
+      issues.push('⚠️ Nobody on the right flank — you have no width on that side. Easy to defend against.');
+    } else {
+      passes.push('✅ Both flanks covered — you have width to stretch the opposition');
+    }
+  }
+
+  // ── Central lane overload ─────────────────────────────────────
+  if(capLane(zoneRoles, ['z7','z8','z9'], 3)) {
+    issues.push('⚠️ Too many players in the central defensive corridor (zones 7/8/9) — midfield will be congested and passing lanes close up');
+  }
+
+  // ── Effective width check ────────────────────────────────────
+  if(!hasEffectiveWidth(zoneRoles)) {
+    issues.push('⚠️ Shape is too narrow — nobody using the wide areas on either side');
+  } else {
+    passes.push('✅ Wide areas are being used on both sides');
+  }
+
+  // ── Side balance ─────────────────────────────────────────────
+  const { left: sideL, right: sideR } = getSideCounts(zoneRoles);
+  if(Math.abs(sideL - sideR) >= 2) {
+    issues.push(`⚠️ Lopsided — left side has ${sideL} players, right has ${sideR}. One side is doing too much work.`);
+  } else {
+    passes.push(`✅ Left and right are roughly balanced (L:${sideL} R:${sideR})`);
+  }
+
+  // ── Central overload ─────────────────────────────────────────
+  const midCol = countColumn(zoneRoles, COL_ZONES[3]);
+  if(midCol >= 5) {
+    issues.push(`❌ ${midCol} players all sitting in the defensive midfield column — the shape is too compressed. Give them space.`);
+  }
+
+  // ── Progression lanes ────────────────────────────────────────
+  const hasLeftProg  = ['z11','z6'].some(z => (zoneRoles[z]?.length || 0) > 0);
+  const hasRightProg = ['z10','z15'].some(z => (zoneRoles[z]?.length || 0) > 0);
+  if(!hasLeftProg)  issues.push('❌ Left side has no one to carry the ball forward (zones 6 and 11 are both empty)');
+  if(!hasRightProg) issues.push('❌ Right side has no one to carry the ball forward (zones 10 and 15 are both empty)');
+  if(hasLeftProg && hasRightProg) passes.push('✅ Both sides can progress the ball forward');
+
+  return { issues, passes };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI — TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    t.classList.toggle('active', (i===0 && tab==='manual') || (i===1 && tab==='preset'));
+  });
+  document.getElementById('tab-manual').classList.toggle('active', tab === 'manual');
+  document.getElementById('tab-preset').classList.toggle('active', tab === 'preset');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI — DROPDOWNS
+// ═══════════════════════════════════════════════════════════════
+const secEl  = document.getElementById('sel-sector');
+const roleEl = document.getElementById('sel-role');
+const sideEl = document.getElementById('sel-side');
+
+Object.keys(SECTORS).forEach(s => {
+  const o = document.createElement('option');
+  o.value = s; o.textContent = s; secEl.appendChild(o);
+});
+
+secEl.addEventListener('change', () => {
+  roleEl.innerHTML = '<option value="">Role</option>';
+  sideEl.innerHTML = '<option value="">Side</option>';
+  const s = secEl.value;
+  if(s && SECTORS[s]) {
+    Object.keys(SECTORS[s]).forEach(r => {
+      const o = document.createElement('option');
+      o.value = r; o.textContent = r; roleEl.appendChild(o);
+    });
+  }
+});
+
+roleEl.addEventListener('change', () => {
+  sideEl.innerHTML = '<option value="">Side</option>';
+  const s = secEl.value; const r = roleEl.value;
+  if(s && r && SECTORS[s]?.[r]) {
+    SECTORS[s][r].sides.forEach(side => {
+      const o = document.createElement('option');
+      o.value = side;
+      o.textContent = side === 'L' ? 'Left' : side === 'R' ? 'Right' : 'Centre';
+      sideEl.appendChild(o);
+    });
+    if(SECTORS[s][r].sides.length === 1) sideEl.value = SECTORS[s][r].sides[0];
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// UI — PRESET FORMATION BUTTONS
+// ═══════════════════════════════════════════════════════════════
+const pg = document.getElementById('preset-grid');
+Object.keys(PRESETS).forEach(name => {
+  const btn = document.createElement('div');
+  btn.className = 'preset-btn';
+  btn.textContent = name;
+  btn.onclick = () => {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    loadPreset(name);
+  };
+  pg.appendChild(btn);
+});
+
+function loadPreset(name) {
+  activeRoles = []; colorIdx = 0;
+  PRESETS[name].forEach(([sector, role, side]) => {
+    const data = SECTORS[sector]?.[role]; if(!data) return;
+    const color = COLORS[colorIdx % COLORS.length]; colorIdx++;
+    activeRoles.push({
+      sector, role, side, color,
+      home:  applySlot(data.home,  side),
+      moves: applySlot(data.moves, side),
+      okay:  applySlot(data.okay,  side),
+    });
+  });
+  renderAll();
+  switchTab('manual');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI — ADD / REMOVE ROLES
+// ═══════════════════════════════════════════════════════════════
+function addRole() {
+  const s = secEl.value; const r = roleEl.value; const side = sideEl.value;
+  if(!s || !r || !side) { alert('Pick a position group, role and side first'); return; }
+  if(activeRoles.length >= 11) { alert('Maximum 11 players'); return; }
+  if(activeRoles.find(x => x.sector===s && x.role===r && x.side===side)) {
+    alert(`${r} (${side==='L'?'Left':side==='R'?'Right':'Centre'}) is already in your lineup`);
+    return;
+  }
+  const data  = SECTORS[s][r];
+  const color = COLORS[colorIdx % COLORS.length]; colorIdx++;
+  activeRoles.push({
+    sector:s, role:r, side, color,
+    home:  applySlot(data.home,  side),
+    moves: applySlot(data.moves, side),
+    okay:  applySlot(data.okay,  side),
+  });
+  renderAll();
+}
+
+function removeRole(idx) { activeRoles.splice(idx, 1); renderAll(); }
+
+function clearAll() { activeRoles = []; colorIdx = 0; renderAll(); }
+
+// ═══════════════════════════════════════════════════════════════
+// UI — MENTALITY & VIEW SELECTION
+// ═══════════════════════════════════════════════════════════════
+function setMentality(m) {
+  currentMentality = m;
+  document.querySelectorAll('.men-btn').forEach(b => b.classList.toggle('active', b.dataset.men === m));
+  document.getElementById('men-desc').textContent = MENTALITY_DESC[m] || '';
+  renderAll();
+}
+
+function setView(v) {
+  currentView = v;
+  document.querySelectorAll('.vtog').forEach(b => b.classList.toggle('active', b.dataset.v === v));
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — ROLE TAGS (lineup display)
+// ═══════════════════════════════════════════════════════════════
+function renderTags() {
+  const el = document.getElementById('role-list');
+  if(!activeRoles.length) {
+    el.innerHTML = '<span class="empty-state">No players added yet — build your lineup above</span>';
+    return;
+  }
+  const SL = {L:'LEFT', R:'RIGHT', C:'CTR'};
+  el.innerHTML = activeRoles.map((r, i) => {
+    const ipfPct  = calcLikelihood(r, 'IPF');
+    const oopfPct = calcLikelihood(r, 'OOPF');
+    const lhtml = currentMentality ? `
+      <span class="side-badge" style="color:${likelihoodColor(ipfPct)};background:#1a1a1a" title="Likelihood to reach attacking shape zones">IPF ${ipfPct}%</span>
+      <span class="side-badge" style="color:${likelihoodColor(oopfPct)};background:#1a1a1a" title="Likelihood to reach defensive shape zones">DEF ${oopfPct}%</span>` : '';
+    return `<div class="role-tag">
+      <div class="dot" style="background:${r.color}"></div>
+      <span>${r.role}</span>
+      <span class="side-badge">${SL[r.side]}</span>
+      ${lhtml}
+      <span class="rm" onclick="removeRole(${i})" title="Remove">✕</span>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — PITCH GRID
+// ═══════════════════════════════════════════════════════════════
+function renderGrid() {
+  // Clear all zone states
+  ALL_ZONES.forEach(z => {
+    const el = document.getElementById(z); if(!el) return;
+    el.className = el.className.replace(/\b(sole|shared|crowded|dead|ipf-\w+|oopf-\w+)\b/g, '').trim();
+    const d = document.getElementById('d' + z.replace('z','')); if(d) d.innerHTML = '';
+  });
+  if(!activeRoles.length) return;
+
+  const prefix      = currentView === 'IPF' ? 'ipf-' : currentView === 'OOPF' ? 'oopf-' : '';
+  const displayList = getDisplayZones();
+
+  // Build zone → roles map for this view
+  const zr = {};
+  ALL_ZONES.forEach(z => zr[z] = []);
+  displayList.forEach(({r, zones}) => zones.forEach(z => { if(zr[z]) zr[z].push(r); }));
+
+  // Crowded zones — 3+ roles in same zone, computed directly from display list
+  const zrCount = {};
+  ALL_ZONES.forEach(z => zrCount[z] = 0);
+  displayList.forEach(({r, zones}) => {
+    if(r.role === 'GK' || r.role === 'SK') return;
+    zones.forEach(z => { if(z in zrCount) zrCount[z]++; });
+  });
+  const crowdedZones = new Set(ALL_ZONES.filter(z => zrCount[z] >= 3));
+
+  // Apply zone state classes
+  ALL_ZONES.forEach(z => {
+    const el    = document.getElementById(z); if(!el) return;
+    const roles = zr[z];
+    if(!roles.length)            el.classList.add(prefix + 'dead');
+    else if(crowdedZones.has(z)) el.classList.add(prefix + 'crowded');
+    else if(roles.length === 1)  el.classList.add(prefix + 'sole');
+    else                         el.classList.add(prefix + 'shared');
+    // Add colour dots for each role present
+    const d = document.getElementById('d' + z.replace('z',''));
+    if(d) d.innerHTML = roles.map(r =>
+      `<div class="zdot" style="background:${r.color}" title="${r.role} (${r.side})"></div>`
+    ).join('');
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER — ANALYSIS PANEL
+// ═══════════════════════════════════════════════════════════════
+function renderAnalysis() {
+  const el = document.getElementById('analysis');
+  if(activeRoles.length < 2) {
+    el.innerHTML = '<div class="empty-state" style="grid-column:1/-1">Add at least 2 players, then pick a game plan to see your tactical analysis</div>';
+    return;
+  }
+
+  // Build zone maps for all three views
+  function buildZR(view) {
+    const zr = {}; ALL_ZONES.forEach(z => zr[z] = []);
+    const cfg = currentMentality ? MENTALITY_CONFIG[currentMentality] : null;
+    const sideOk = (z, side) => {
+      if(side === 'L') return L_ZONES.has(z) || isCenter(z);
+      if(side === 'R') return R_ZONES.has(z) || isCenter(z);
+      return true;
+    };
+    activeRoles.forEach(r => {
+      let zones;
+      if(!cfg || view === 'START') zones = getRoleZonesFull(r).filter(z => sideOk(z, r.side));
+      else if(view === 'OOPF') {
+        const shifted = getShiftedZones(r, 0, 'OOPF');
+        const okayZones = (r.okay || []).filter(z => sideOk(z, r.side));
+        zones = [...new Set([...shifted, ...okayZones])];
+      } else {
+        const shifted = getShiftedZones(r, cfg.ipfShift, 'IPF');
+        const okayZones = (r.okay || []).filter(z => sideOk(z, r.side));
+        zones = [...new Set([...shifted, ...okayZones])];
+      }
+      zones = [...new Set(zones)];
+      zones.forEach(z => { if(zr[z]) zr[z].push(r); });
+    });
+    return zr;
+  }
+
+  const zrStart = buildZR('START');
+  const zrIPF   = currentMentality ? buildZR('IPF')  : null;
+  const zrOOPF  = currentMentality ? buildZR('OOPF') : null;
+  const zr = currentView === 'IPF' ? zrIPF : currentView === 'OOPF' ? zrOOPF : zrStart;
+
+  const covered = ALL_ZONES.filter(z => zr[z].length > 0);
+  const dead    = ALL_ZONES.filter(z => zr[z].length === 0);
+  const sole    = ALL_ZONES.filter(z => zr[z].length === 1);
+  const shared  = ALL_ZONES.filter(z => zr[z].length === 2);
+  const crowded = ALL_ZONES.filter(z => zr[z].length >= 3);
+  const pct     = Math.round(covered.length / ALL_ZONES.length * 100);
+
+  const lCov     = ALL_ZONES.filter(z => L_ZONES.has(z) && zr[z].length > 0).length;
+  const rCov     = ALL_ZONES.filter(z => R_ZONES.has(z) && zr[z].length > 0).length;
+  const balanced = Math.abs(lCov - rCov) <= 1;
+
+  // Positional audit (IPF and OOPF only)
+  const applyAudit = (currentView === 'IPF' || currentView === 'OOPF') && !!currentMentality;
+  const { issues: auditIssues, passes: auditPasses } = applyAudit
+    ? runPositionalAudit(getDisplayZones(), currentView)
+    : { issues: [], passes: [] };
+
+  // Key combinations — pairs of roles sharing zones
+  const pairMap = {};
+  shared.forEach(z => {
+    const roles = zr[z];
+    for(let i=0; i<roles.length; i++) for(let j=i+1; j<roles.length; j++) {
+      const k = `${roles[i].role}(${roles[i].side}) + ${roles[j].role}(${roles[j].side})`;
+      pairMap[k] = (pairMap[k] || 0) + 1;
+    }
+  });
+  const topPairs = Object.entries(pairMap).sort((a,b) => b[1]-a[1]).slice(0, 3);
+
+  // Dead zones by third
+  const offD = dead.filter(z => OFF_ZONES.has(z));
+  const midD = dead.filter(z => ['z11','z12','z13','z14','z15','z6','z7','z8','z9','z10'].includes(z));
+  const defD = dead.filter(z => ['z1','z2','z3','z4','z5'].includes(z));
+
+  let html = '';
+
+  // ── Coverage summary card ─────────────────────────────────────
+  const cc = pct >= 75 ? 'green' : pct >= 50 ? 'yellow' : 'red';
+  const viewLabel = currentView === 'IPF' ? 'With the Ball' : currentView === 'OOPF' ? 'Without the Ball' : 'Starting Shape';
+  const barColor = pct >= 75 ? '#55cc77' : pct >= 50 ? '#e8c84a' : '#ff6b6b';
+  html += `<div class="acard ${cc}">
+    <div class="atitle">📊 ${viewLabel} — ${pct}% of pitch covered</div>
+    <div class="score-bar"><div class="score-fill" style="width:${pct}%;background:${barColor}"></div></div>
+    <ul>
+      <li>${covered.length} of ${ALL_ZONES.length} zones have someone in them</li>
+      <li>${sole.length} zones owned by 1 player · ${shared.length} shared by 2 · ${crowded.length} overcrowded</li>
+      <li>Left side: ${lCov}/9 · Right side: ${rCov}/9</li>
+      <li>${balanced ? '✅ Both sides covered evenly' : '⚠️ One side has way more players — you\'re lopsided'}</li>
+    </ul>
+  </div>`;
+
+  // ── Morphing gap — how different your shape is in vs out of possession ──
+  if(zrIPF && zrOOPF) {
+    const ipfOccupied  = new Set();
+    const oopfOccupied = new Set();
+    ALL_ZONES.forEach(z => {
+      if(zrIPF[z].some(r  => r.role !== 'GK' && r.role !== 'SK')) ipfOccupied.add(z);
+      if(zrOOPF[z].some(r => r.role !== 'GK' && r.role !== 'SK')) oopfOccupied.add(z);
+    });
+    const ipfOnly      = [...ipfOccupied].filter(z => !oopfOccupied.has(z));
+    const oopfOnly     = [...oopfOccupied].filter(z => !ipfOccupied.has(z));
+    const sharedZones  = [...ipfOccupied].filter(z => oopfOccupied.has(z));
+    const gapSize      = ipfOnly.length + oopfOnly.length;
+    const totalActive  = new Set([...ipfOccupied, ...oopfOccupied]).size;
+    const changeRatio  = totalActive > 0 ? Math.round((gapSize / totalActive) * 100) : 0;
+    const formatZones  = zs => zs.length === 0 ? 'none'
+      : zs.map(z => z.replace('z','')).sort((a,b) => parseInt(a)-parseInt(b)).join(', ');
+
+    let gapLabel, gapColor, gapNote;
+    if(gapSize <= 3)       { gapLabel='Very Small'; gapColor='green';  gapNote='Shape barely changes — your team transitions smoothly'; }
+    else if(gapSize <= 6)  { gapLabel='Small';      gapColor='green';  gapNote='Minimal shape change — well-drilled team can handle this'; }
+    else if(gapSize <= 10) { gapLabel='Moderate';   gapColor='yellow'; gapNote='Some shape change — manageable with fit, organised players'; }
+    else                   { gapLabel='Large';       gapColor='red';    gapNote='Big difference between attack and defence — vulnerable on transitions'; }
+
+    html += `<div class="acard ${gapColor}">
+      <div class="atitle">↔️ Shape Change — ${gapLabel} (${changeRatio}% of positions shift)</div>
+      <ul>
+        <li><span style="color:#77ee99">🟢 Only when attacking:</span> zones ${formatZones(ipfOnly)}</li>
+        <li><span style="color:#ffaa66">🟠 Only when defending:</span> zones ${formatZones(oopfOnly)}</li>
+        <li><span style="color:#666">⚪ Same in both phases:</span> ${sharedZones.length} zones</li>
+        <li>${gapNote}</li>
+      </ul>
+    </div>`;
+  }
+
+  // ── Positional audit results ──────────────────────────────────
+  if(applyAudit) {
+    if(auditIssues.length > 0) {
+      html += `<div class="acard red">
+        <div class="atitle">🚨 Things to fix (${auditIssues.length})</div>
+        <ul>${auditIssues.map(i => `<li>${i}</li>`).join('')}</ul>
+      </div>`;
+    }
+    if(auditPasses.length > 0) {
+      html += `<div class="acard green">
+        <div class="atitle">✅ Looking good on these</div>
+        <ul>${auditPasses.map(p => `<li>${p}</li>`).join('')}</ul>
+      </div>`;
+    }
+  }
+
+  // ── Key combinations ──────────────────────────────────────────
+  if(topPairs.length) {
+    html += `<div class="acard yellow">
+      <div class="atitle">🤝 Key Combinations</div>
+      <ul>${topPairs.map(([p,c]) => `<li>${p} <span style="color:#555">(${c} shared zone${c>1?'s':''})</span></li>`).join('')}</ul>
+    </div>`;
+  }
+
+  // ── Dead zones ────────────────────────────────────────────────
+  if(dead.length) {
+    const dl = [];
+    if(offD.length) dl.push(`Final third: ${offD.map(z=>z.replace('z','')).join(', ')}`);
+    if(midD.length) dl.push(`Midfield: ${midD.map(z=>z.replace('z','')).join(', ')}`);
+    if(defD.length) dl.push(`Defensive: ${defD.map(z=>z.replace('z','')).join(', ')}`);
+    html += `<div class="acard blue">
+      <div class="atitle">🕳 Uncovered Zones (${dead.length})</div>
+      <ul>${dl.map(d => `<li>${d}</li>`).join('')}</ul>
+    </div>`;
+  }
+
+  // ── Likelihood cards — who is / isn't doing their job ────────
+  if(!currentMentality) {
+    html += `<div class="acard purple">
+      <div class="atitle">💡 How to read this</div>
+      <ul>
+        <li>Pick a <b>game plan</b> to see your shape change live</li>
+        <li>Switch between <b>With the Ball</b> and <b>Without the Ball</b> to see both shapes</li>
+        <li>🟢 Green = 1 player there · 🟡 Yellow = 2 players sharing · 🔴 Red = too many</li>
+        <li>Each player tag shows how likely they are to actually get to their zone</li>
+      </ul>
+    </div>`;
+  } else {
+    const activeView = currentView === 'OOPF' ? 'OOPF' : 'IPF';
+    const cfg = MENTALITY_CONFIG[currentMentality];
+
+    const getRoleShift = r => {
+      const mob  = MOBILITY[r.role] || 2;
+      if(activeView === 'OOPF') {
+        const type = OOPF_ROLE_TYPE[r.role] || 'mid';
+        if(type === 'def') return -Math.round(cfg.oopfDrop * (mob/3));
+        if(type === 'att') return  Math.round(cfg.oopfPress * (mob/3));
+        return -Math.round((cfg.oopfDrop * 0.4) * (mob/3));
+      }
+      return Math.round(cfg.ipfShift * (mob/3));
+    };
+
+    // Only flag roles that actually need to move (actualShift !== 0)
+    const unreliable = activeRoles.filter(r => calcLikelihood(r, activeView) < 40 && getRoleShift(r) !== 0);
+    const reliable   = activeRoles.filter(r => calcLikelihood(r, activeView) >= 70 && getRoleShift(r) !== 0);
+
+    if(unreliable.length) {
+      html += `<div class="acard red">
+        <div class="atitle">⚠️ Might not get there (${activeView === 'IPF' ? 'attacking' : 'defending'})</div>
+        <ul>${unreliable.map(r => `<li>${r.role} (${r.side}) — ${calcLikelihood(r,activeView)}% — probably won't reach their spot</li>`).join('')}</ul>
+      </div>`;
+    }
+    if(reliable.length) {
+      html += `<div class="acard green">
+        <div class="atitle">✅ Doing their job reliably</div>
+        <ul>${reliable.map(r => `<li>${r.role} (${r.side}) — ${calcLikelihood(r,activeView)}%</li>`).join('')}</ul>
+      </div>`;
+    }
+  }
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MAIN RENDER
+// ═══════════════════════════════════════════════════════════════
+function renderAll() { renderTags(); renderGrid(); renderAnalysis(); }
+
+// ── Init ──────────────────────────────────────────────────────
+renderAll();
+</script>
+
+</body>
+</html>
