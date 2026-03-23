@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA -->
+  <meta name="application-name" content="FM Consequence Engine">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FM CE">
+  <meta name="description" content="FM Tactical Consequence Engine — Instructions and Verdicts">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#e8c84a">
+  <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22FM%20Consequence%20Engine%22%2C%22short_name%22%3A%22FM%20CE%22%2C%22description%22%3A%22FM%20Tactical%20Consequence%20Engine%20%E2%80%94%20Instructions%20and%20Verdicts%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230e0e0e%22%2C%22theme_color%22%3A%22%23e8c84a%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D'http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg'%2520viewBox%253D'0%25200%2520100%2520100'%253E%253Crect%2520width%253D'100'%2520height%253D'100'%2520fill%253D'%25230e0e0e'%252F%253E%253Ctext%2520y%253D'.9em'%2520font-size%253D'80'%2520x%253D'50%2525'%2520dominant-baseline%253D'middle'%2520text-anchor%253D'middle'%253E%25E2%259A%25BD%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+<title>FM Consequence Engine</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#0e0e0e; color:white; font-family:monospace;
+  padding:14px; display:flex; flex-direction:column;
+  align-items:center; gap:10px; min-height:100vh;
+}
+h2 { color:#e8c84a; letter-spacing:3px; font-size:1rem; margin-top:4px; }
+.subtitle { color:#444; font-size:0.56rem; letter-spacing:1.5px; text-transform:uppercase; }
+.w { width:min(820px,97vw); }
+
+/* Category tabs */
+.cat-tabs { display:flex; gap:4px; width:min(820px,97vw); margin-bottom:2px; }
+.ctab {
+flex:1; padding:7px 4px; text-align:center; font-size:0.62rem;
+background:#1a1a1a; border:1px solid #2a2a2a; border-radius:4px;
+cursor:pointer; color:#555; transition:all 0.15s; letter-spacing:0.5px;
+}
+.ctab:hover { border-color:#666; color:#aaa; }
+.ctab.active { background:#1a1a10; border-color:#e8c84a; color:#e8c84a; }
+
+/* Instruction grid */
+.instr-section { margin-bottom:8px; }
+.sec-label {
+font-size:0.5rem; color:#444; text-transform:uppercase;
+letter-spacing:1.5px; margin-bottom:4px; padding-left:2px;
+}
+.instr-row { display:flex; gap:3px; flex-wrap:wrap; margin-bottom:3px; }
+
+.instr-btn {
+padding:5px 10px; border-radius:4px; font-size:0.62rem;
+background:#141414; border:1px solid #222; color:#666;
+cursor:pointer; transition:all 0.15s; font-family:monospace;
+position:relative;
+}
+.instr-btn:hover { border-color:#888; color:#ccc; }
+.instr-btn.selected { background:#1a1a10; border-color:#e8c84a; color:#e8c84a; }
+.instr-btn.toggle-on {
+background:#112211; border-color:#44aa66; color:#77dd99;
+}
+.instr-btn.toggle-on.selected {
+background:#0d1f0d; border-color:#e8c84a; color:#e8c84a;
+}
+
+/* Conflict indicator dot */
+.instr-btn .conf-dot {
+position:absolute; top:3px; right:3px;
+width:5px; height:5px; border-radius:50%;
+}
+
+/* Result panel */
+.result-panel {
+background:#111; border:1px solid #1e1e1e; border-radius:6px;
+padding:13px 14px; margin-top:6px;
+}
+.rp-title {
+font-size:0.75rem; font-weight:bold; color:#e8c84a;
+margin-bottom:2px;
+}
+.rp-subtitle {
+font-size:0.56rem; color:#555; margin-bottom:10px;
+letter-spacing:0.5px;
+}
+.rp-section { margin-bottom:9px; }
+.rp-section-title {
+font-size:0.5rem; text-transform:uppercase; letter-spacing:1.2px;
+margin-bottom:5px; font-weight:bold;
+}
+.rp-item {
+font-size:0.62rem; line-height:1.7; color:#888; padding-left:4px;
+}
+.rp-item.good   { color:#55cc77; }
+.rp-item.bad    { color:#ff6b6b; }
+.rp-item.warn   { color:#e8c84a; }
+.rp-item.tip    { color:#77aaff; }
+.rp-item.ref    { color:#aa77ff; font-style:italic; }
+
+/* Conflict cards */
+.conflict-card {
+background:#1a0d0d; border:1px solid #3a1111; border-radius:4px;
+padding:7px 10px; margin-top:5px; font-size:0.58rem; color:#cc7777;
+line-height:1.6;
+}
+.conflict-card .conf-title { color:#ff6b6b; font-size:0.52rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; font-weight:bold; }
+
+/* Active instruction summary bar */
+.active-bar {
+background:#141414; border:1px solid #222; border-radius:4px;
+padding:6px 10px; font-size:0.58rem; color:#555;
+display:flex; flex-wrap:wrap; gap:5px; align-items:center;
+min-height:32px;
+}
+.active-tag {
+background:#1a1a10; border:1px solid #444; border-radius:3px;
+padding:2px 7px; font-size:0.56rem; color:#aaa;
+display:flex; align-items:center; gap:4px;
+}
+.active-tag .atag-x { color:#555; cursor:pointer; margin-left:2px; }
+.active-tag .atag-x:hover { color:#ff6b6b; }
+.conflict-badge {
+font-size:0.5rem; background:#3a1111; color:#ff8888;
+border-radius:2px; padding:1px 4px;
+}
+
+.empty-state { color:#2a2a2a; font-size:0.65rem; text-align:center; padding:20px; }
+
+/* Verdict panel */
+.verd-card {
+background:#111; border:1px solid #1e1e1e; border-radius:6px;
+padding:12px 14px; margin-bottom:7px;
+}
+.verd-card .vc-title {
+font-size:0.52rem; text-transform:uppercase; letter-spacing:1.2px;
+font-weight:bold; margin-bottom:8px;
+}
+.verd-item { font-size:0.63rem; line-height:1.8; padding-left:4px; color:#888; }
+.verd-item.pos  { color:#55cc77; }
+.verd-item.neg  { color:#ff6b6b; }
+.verd-item.warn { color:#e8c84a; }
+.verd-item.tip  { color:#77aaff; }
+.verd-item.ref  { color:#aa77ff; font-style:italic; }
+
+.style-badge {
+display:inline-block; padding:4px 12px; border-radius:4px;
+font-size:0.75rem; font-weight:bold; letter-spacing:1px;
+margin-bottom:8px;
+}
+.health-bar-wrap {
+height:6px; background:#1a1a1a; border-radius:3px; margin:6px 0 10px;
+}
+.health-bar { height:100%; border-radius:3px; transition:width 0.5s; }
+
+.verd-grid {
+display:grid; grid-template-columns:1fr 1fr; gap:6px;
+}
+@media(max-width:480px){ .verd-grid { grid-template-columns:1fr; } }
+
+.verd-empty {
+color:#2a2a2a; font-size:0.65rem; text-align:center;
+padding:28px; border:1px dashed #1a1a1a; border-radius:6px;
+}
+</style>
+
+</head>
+<body>
+
+<h2>FM CONSEQUENCE ENGINE</h2>
+<p class="subtitle w">Click any instruction to see what it does and what it breaks</p>
+
+<!-- Active instructions summary -->
+
+<div class="active-bar w" id="active-bar">
+  <span style="color:#333;font-size:0.54rem">No instructions selected</span>
+</div>
+
+<!-- Category tabs -->
+
+<div class="cat-tabs w">
+  <div class="ctab active" onclick="setCategory('shape')">Shape</div>
+  <div class="ctab" onclick="setCategory('defence')">Defence</div>
+  <div class="ctab" onclick="setCategory('attack')">Attack</div>
+  <div class="ctab" onclick="setCategory('verdict')" id="verdict-tab" style="border-color:#333;color:#444">⚖️ Verdict</div>
+</div>
+
+<!-- Instruction selector -->
+
+<div class="w" id="instr-panel"></div>
+
+<!-- Result panel (instruction detail) -->
+
+<div class="w" id="result-panel">
+  <div class="empty-state">Select an instruction above to see its consequences</div>
+</div>
+
+<!-- Verdict panel -->
+
+<div class="w" id="verdict-panel" style="display:none"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════
+
+// Instruction definitions
+// type: 'slider' = mutually exclusive options (only one active)
+//       'toggle' = on/off (can combine with others)
+// conflicts: [list of instruction ids that clash with this one]
+// enables:   [list of instruction ids that this makes more effective]
+
+const CATEGORIES = {
+  shape: {
+    label: 'Shape',
+    sections: [
+      {
+        label: 'Team Mentality',
+        type: 'slider',
+        options: ['contain','defensive','counter','balanced','control','attacking','overload'],
+      },
+      {
+        label: 'Width',
+        type: 'slider',
+        options: ['width-narrow','width-balanced','width-wide'],
+      },
+      {
+        label: 'Passing Tempo',
+        type: 'slider',
+        options: ['tempo-slow','tempo-normal','tempo-fast'],
+      },
+      {
+        label: 'Creative Freedom',
+        type: 'slider',
+        options: ['freedom-disciplined','freedom-balanced','freedom-expressive'],
+      },
+    ]
+  },
+  defence: {
+    label: 'Defence',
+    sections: [
+      {
+        label: 'Defensive Line',
+        type: 'slider',
+        options: ['dline-deep','dline-balanced','dline-high'],
+      },
+      {
+        label: 'Closing Down',
+        type: 'slider',
+        options: ['close-sit','close-ownhalf','close-allover'],
+      },
+      {
+        label: 'Tackling',
+        type: 'slider',
+        options: ['tackle-cautious','tackle-normal','tackle-committed'],
+      },
+      {
+        label: 'Offside Trap',
+        type: 'slider',
+        options: ['offside-no','offside-yes'],
+      },
+      {
+        label: 'Time Wasting',
+        type: 'slider',
+        options: ['waste-no','waste-yes'],
+      },
+    ]
+  },
+  attack: {
+    label: 'Attack',
+    sections: [
+      {
+        label: 'Final Third',
+        type: 'row-pair',
+        // Each sub-array = one row [left option, right option] — pick one or none per row
+        rows: [
+          ['early-crosses',   'look-overlap'],
+          ['shoot-on-sight',  'work-into-box'],
+          ['run-at-defence',  'through-balls'],
+        ],
+      },
+      {
+        label: 'Passing Style',
+        type: 'slider',
+        options: ['pass-short','pass-mixed','pass-direct','pass-long'],
+      },
+      {
+        label: 'Passing Focus',
+        type: 'slider',
+        options: ['focus-left','focus-centre','focus-right','focus-flanks','focus-mixed'],
+      },
+      {
+        label: 'GK Distribution',
+        type: 'slider',
+        options: ['gk-short','gk-mixed','gk-long'],
+      },
+    ]
+  },
+};
+
+const INSTRUCTIONS = {
+  // ── MENTALITY ──────────────────────────────────────────────
+  'contain': {
+    label: 'Contain',
+    does: [
+      'Everyone drops deep — 9-10 players behind the ball at all times',
+      'Tempo drops, passing becomes very cautious and sideways',
+      'Players actively look to waste time and slow the game down',
+      'No pressing — players hold shape and let opposition come to them',
+    ],
+    enables: ['dline-deep','close-sit','tackle-cautious','waste-yes'],
+    conflicts: ['dline-high','close-allover','tempo-fast','run-at-defence','through-balls'],
+    tradeoffs: [
+      'Zero attacking threat — you will be pinned back for 90 minutes',
+      'Physical and mental exhaustion as defenders absorb constant pressure',
+      'One mistake = goal, because recovery is slow when everyone is so deep',
+    ],
+    attributes: ['Positioning 14+', 'Concentration 14+', 'Stamina 13+', 'Strength 13+ for defensive duels'],
+    realworld: 'Atletico Madrid vs Liverpool 2020 UCL — sat deep, absorbed, hit on the counter',
+  },
+  'defensive': {
+    label: 'Defensive',
+    does: [
+      'Shape compresses into your own half but with more organisation than Contain',
+      'Players look to win the ball and transition quickly rather than just absorb',
+      'Strikers track back more than in Balanced or above',
+      'Tempo moderate — not rushing but not dawdling',
+    ],
+    enables: ['dline-deep','dline-balanced','close-ownhalf','tackle-normal'],
+    conflicts: ['dline-high','close-allover','freedom-expressive','run-at-defence'],
+    tradeoffs: [
+      'Limited attacking outlet — need fast, clinical finishers to make it count on the break',
+      'Can be overrun by teams with patient build-up play if shape breaks',
+    ],
+    attributes: ['Work Rate 13+', 'Positioning 13+', 'Pace 13+ for transition forwards'],
+    realworld: 'Jose Mourinho Chelsea 2004/05 — defensive solidity, quick transitions',
+  },
+  'counter': {
+    label: 'Counter',
+    does: [
+      'Defends deep and compact, then releases players quickly on turnovers',
+      'Vertical passes and forward runs triggered immediately on winning the ball',
+      'Players instructed to look for the quick transition before shape re-forms',
+      'More direct than Control but less risky than Attacking',
+    ],
+    enables: ['pass-direct','tempo-fast','through-balls','run-at-defence','gk-short'],
+    conflicts: ['pass-long','close-allover','dline-high','freedom-expressive'],
+    tradeoffs: [
+      'If the counter fails and you lose it high up, you are exposed',
+      'Needs pacey forwards — slow strikers kill the counter dead',
+      'Opponents who press high nullify the transition space',
+    ],
+    attributes: ['Pace 14+ forwards', 'Off the Ball 14+', 'Decisions 13+ (know when to go)'],
+    realworld: 'Leicester City 2015/16 — Vardy\'s counter-attack runs, deep shape that released quickly',
+  },
+  'balanced': {
+    label: 'Balanced',
+    does: [
+      'Middle ground — neither heavily defensive nor reckless',
+      'Players make decisions based on game state rather than rigid instructions',
+      'Provides the foundation for tactical adjustments in either direction',
+      'No automatic under-the-hood boosts to pressing, tempo or directness',
+    ],
+    enables: ['width-balanced','tempo-normal','freedom-balanced'],
+    conflicts: [],
+    tradeoffs: [
+      'Can become passive against teams that dominate — need manual adjustments',
+      'Lacks intensity of pressing mentalities and security of defensive ones',
+    ],
+    attributes: ['Decisions 13+ — players must judge when to be aggressive vs cautious'],
+    realworld: 'Most teams\' base state — the starting point before tactical identity is layered on',
+  },
+  'control': {
+    label: 'Control',
+    does: [
+      'Possession-oriented — players move the ball patiently and safely',
+      'More defensive than Attacking — cautious with defensive positioning to avoid counter',
+      'Players pick moments to break rather than constantly pushing forward',
+      'Higher line than Balanced but not as risky as Attacking',
+    ],
+    enables: ['pass-short','pass-mixed','close-ownhalf','dline-balanced','freedom-balanced'],
+    conflicts: ['pass-long','gk-long','tempo-fast','close-sit'],
+    tradeoffs: [
+      'Can be sterile against well-organised low blocks',
+      'Needs technically gifted players — poor passers lose it under pressure',
+      'Vulnerable to high press if build-up is slow',
+    ],
+    attributes: ['Passing 13+', 'Technique 13+', 'Composure 13+', 'Vision 12+'],
+    realworld: 'Pep Guardiola Barcelona 2010 — positional control, patient build-up',
+  },
+  'attacking': {
+    label: 'Attacking',
+    does: [
+      'Most players push forward — higher line, more width, faster tempo',
+      'Players instructed to take more risks in possession and in transitions',
+      'Fullbacks and midfielders make more forward runs automatically',
+      'Accept some defensive risk to generate more attacking threat',
+    ],
+    enables: ['dline-high','close-allover','tempo-fast','run-at-defence','through-balls','look-overlap','freedom-expressive'],
+    conflicts: ['close-sit','dline-deep','pass-long','waste-yes'],
+    tradeoffs: [
+      'Significant space behind the defensive line — pace in behind exploits this',
+      'Counter-attacking teams love this — they sit back and hit you on the break',
+      'Stamina drain is higher — players chasing forwards and tracking back constantly',
+    ],
+    attributes: ['Stamina 14+', 'Work Rate 14+', 'Pace 13+ for wide players', 'Positioning 14+ for CBs holding the line'],
+    realworld: 'Klopp\'s Liverpool 2019/20 — high line, aggressive, total commitment to attack',
+  },
+  'overload': {
+    label: 'Overload',
+    does: [
+      'Maximum attacking commitment — nearly everyone forward',
+      'Tempo is very high, shape is loose, players take big risks',
+      'Typically used when chasing a game in the final minutes',
+      'Strikers and midfielders are given explicit licence to get into the box',
+    ],
+    enables: ['dline-high','close-allover','tempo-fast','early-crosses','shoot-on-sight','run-at-defence'],
+    conflicts: ['close-sit','dline-deep','waste-yes','pass-short','freedom-disciplined'],
+    tradeoffs: [
+      'Completely open at the back — one turnover = clear chance against',
+      'Players tire very quickly at this intensity',
+      'Only sustainable for short bursts — do not play 90 minutes on Overload',
+    ],
+    attributes: ['Stamina 15+', 'Pace 14+ everyone', 'Work Rate 15+ — no passengers at this level'],
+    realworld: 'Any team chasing a 1-0 deficit in the 80th minute — organised chaos',
+  },
+
+  // ── WIDTH ──────────────────────────────────────────────────
+  'width-narrow': {
+    label: 'Narrow',
+    does: [
+      'Players concentrate centrally — overloads in the middle third',
+      'Wide players tuck inside, creating more central passing triangles',
+      'Harder for opposition to play through the centre, but flanks are free',
+      'More compact shape — easier to maintain defensive structure',
+    ],
+    enables: ['pass-short','focus-centre','through-balls','freedom-disciplined'],
+    conflicts: ['early-crosses','look-overlap','focus-flanks','focus-left','focus-right'],
+    tradeoffs: [
+      'Flanks completely open — crosses come in freely from both sides',
+      'Needs CBs with aerial dominance to deal with crossing',
+      'Wide players underutilised if they have pace or dribbling',
+    ],
+    attributes: ['Technique 13+ (tight space passing)', 'Heading 13+ for CBs (dealing with crosses)'],
+    realworld: 'Classic Tiki-Taka — narrow, congested central channels, cede the wings',
+  },
+  'width-balanced': {
+    label: 'Balanced Width',
+    does: [
+      'Players spread across all 5 lanes without extreme stretching or compression',
+      'Provides coverage on both flanks while maintaining central presence',
+      'Default starting point — can be adjusted based on opponent\'s shape',
+    ],
+    enables: ['focus-mixed','focus-flanks'],
+    conflicts: [],
+    tradeoffs: ['No specific tactical advantage — need instructions to create overloads'],
+    attributes: [],
+    realworld: 'Standard 4-4-2 defensive block — balanced coverage',
+  },
+  'width-wide': {
+    label: 'Wide',
+    does: [
+      'Wide players hug the touchline — stretches opposition defensive line',
+      'Creates space in halfspaces and central areas as defenders are pulled wide',
+      'More crossing opportunities from deep wide positions',
+      'Fullbacks push higher to support width',
+    ],
+    enables: ['early-crosses','look-overlap','focus-flanks','focus-left','focus-right'],
+    conflicts: ['focus-centre','through-balls','width-narrow'],
+    tradeoffs: [
+      'Large gaps between players — counter-attacks go through the middle',
+      'Central midfielders must cover huge horizontal distances',
+      'Stamina drain on wide players and fullbacks',
+    ],
+    attributes: ['Stamina 14+ wide players', 'Crossing 13+', 'Work Rate 14+ for CMs covering space'],
+    realworld: 'Chelsea under Tuchel — wide wingbacks stretching the pitch, Kante covering central gaps',
+  },
+
+  // ── TEMPO ──────────────────────────────────────────────────
+  'tempo-slow': {
+    label: 'Slow Tempo',
+    does: [
+      'Players take their time — more deliberate passing, no urgency',
+      'More horizontal and backward passes — possession retention over penetration',
+      'Opposition must chase and press harder to win the ball',
+      'Less physically demanding on your players per minute',
+    ],
+    enables: ['pass-short','freedom-disciplined','dline-balanced'],
+    conflicts: ['run-at-defence','close-allover','overload','attacking'],
+    tradeoffs: [
+      'Vulnerable to high press — slow build-up is easy to trap',
+      'Can become passive — opposition settles into shape comfortably',
+      'Counter-attacking teams love slow tempo — they get more time to organise',
+    ],
+    attributes: ['Passing 13+', 'Composure 14+', 'Technique 13+', 'Vision 12+'],
+    realworld: 'Possession-based teams vs a deep block — Xavi\'s Barcelona slowing it down',
+  },
+  'tempo-normal': {
+    label: 'Normal Tempo',
+    does: [
+      'Balanced decision speed — players play at natural rhythm',
+      'No specific bias toward quick or deliberate play',
+      'Default — works with most formations and mentalities',
+    ],
+    enables: [],
+    conflicts: [],
+    tradeoffs: ['No specific tactical identity from tempo alone'],
+    attributes: [],
+    realworld: 'Standard mid-table PL side — not slow enough to invite press, not fast enough to be urgent',
+  },
+  'tempo-fast': {
+    label: 'Fast Tempo',
+    does: [
+      'First-time passes, early balls forward, urgent decision-making throughout',
+      'Opposition has less time to organise between phases',
+      'Vertical passing is prioritised — skip the midfield when possible',
+      'Game state shifts quickly — transitions are rapid',
+    ],
+    enables: ['run-at-defence','through-balls','attacking','counter','close-allover'],
+    conflicts: ['pass-short','tempo-slow','contain','defensive','freedom-disciplined'],
+    tradeoffs: [
+      'More mistakes under pressure — players rush decisions and misplace passes',
+      'Stamina drains fast — rotation becomes essential',
+      'Ineffective vs deep block — no space to play into at pace',
+    ],
+    attributes: ['Decisions 14+', 'First Touch 13+', 'Stamina 14+', 'Composure 12+ (don\'t panic)'],
+    realworld: 'Klopp gegenpressing — immediate, relentless, no rest on the ball',
+  },
+
+  // ── CREATIVE FREEDOM ────────────────────────────────────────
+  'freedom-disciplined': {
+    label: 'Disciplined',
+    does: [
+      'Players stick strictly to their role and positional instructions',
+      'No freelancing — everyone fulfils their defined job',
+      'Maintains tactical shape even when individual opportunities arise',
+      'More predictable but more reliable defensively',
+    ],
+    enables: ['dline-high','close-allover','width-narrow','tempo-slow'],
+    conflicts: ['freedom-expressive','overload'],
+    tradeoffs: [
+      'Limits individual brilliance — creative players are suppressed',
+      'Can become rigid against flexible opposition',
+    ],
+    attributes: ['Teamwork 14+', 'Work Rate 13+', 'Concentration 13+'],
+    realworld: 'Mourinho\'s rigid 4-5-1 — everyone knows their job, nobody improvises',
+  },
+  'freedom-balanced': {
+    label: 'Balanced Freedom',
+    does: [
+      'Players balance between following instructions and making individual decisions',
+      'Provides flexibility without complete chaos',
+      'Default — players deviate occasionally when they spot openings',
+    ],
+    enables: [],
+    conflicts: [],
+    tradeoffs: ['No strong tactical statement either way'],
+    attributes: ['Decisions 12+ — players need to judge when to deviate'],
+    realworld: 'Most elite teams in a standard match — structure with individual expression within it',
+  },
+  'freedom-expressive': {
+    label: 'Expressive',
+    does: [
+      'Players given licence to abandon their role if they see a better option',
+      'Dribbles more, attempts riskier passes, breaks lines individually',
+      'Creates unpredictability — harder for opposition to read',
+      'Can generate moments of individual brilliance',
+    ],
+    enables: ['attacking','overload','width-wide'],
+    conflicts: ['freedom-disciplined','dline-high','close-allover','width-narrow','contain','defensive'],
+    tradeoffs: [
+      'Breaks defensive shape — players shirk defensive responsibilities',
+      'Width maintenance fails — wide players drift inside unpredictably',
+      'Useless if players have low Flair or Technique — they just make bad decisions',
+    ],
+    attributes: ['Flair 14+ — ESSENTIAL', 'Technique 14+', 'Dribbling 13+', 'Composure 13+'],
+    realworld: 'Neymar, Mbappe — given total freedom to roam and create individually',
+  },
+
+  // ── DEFENSIVE LINE ──────────────────────────────────────────
+  'dline-deep': {
+    label: 'Deep Line',
+    does: [
+      'Defenders sit closer to their own goal — less exposure to balls in behind',
+      'More space between defence and midfield — harder to press effectively',
+      'Opposition attackers can receive the ball facing goal in more space',
+      'Counter-attack space behind opposition increases when they push up',
+    ],
+    enables: ['contain','defensive','close-sit','close-ownhalf','offside-no'],
+    conflicts: ['dline-high','close-allover','offside-yes','attacking','overload'],
+    tradeoffs: [
+      'Invites pressure — opposition plays freely in front of your defence',
+      'Midfielders isolated — huge gap between lines for opposition to exploit',
+      'Cannot press effectively from deep — opposition has time on the ball',
+    ],
+    attributes: ['Positioning 14+', 'Concentration 14+', 'Strength 13+ — defending in their own box'],
+    realworld: 'Neil Warnock sides — deep, compact, hard to beat, hard to play through',
+  },
+  'dline-balanced': {
+    label: 'Balanced Line',
+    does: [
+      'Defenders operate in a standard position — not committed either way',
+      'Maintains reasonable compactness between lines',
+      'Workable base for most formations',
+    ],
+    enables: [],
+    conflicts: [],
+    tradeoffs: ['No specific defensive identity — needs other instructions to define the shape'],
+    attributes: ['Positioning 12+'],
+    realworld: 'Most Premier League mid-table sides — standard defensive shape',
+  },
+  'dline-high': {
+    label: 'High Line',
+    does: [
+      'Defenders push up — compresses the pitch and reduces space between lines',
+      'Opposition attackers start in offside positions more easily',
+      'When possession is won, your team is already in attacking position',
+      'Squeezes the pitch — opposition has very little space to operate in',
+    ],
+    enables: ['close-allover','offside-yes','attacking','overload','through-balls'],
+    conflicts: ['dline-deep','close-sit','offside-no','contain','defensive'],
+    tradeoffs: [
+      'One ball over the top and your CB is in a footrace with a fast striker',
+      'Any defensive mistake in a compressed space is immediately dangerous',
+      'Completely exposed if pressing fails — massive space in behind',
+    ],
+    attributes: ['Pace 14+ CBs', 'Anticipation 14+', 'Positioning 14+', 'Concentration 14+'],
+    realworld: 'Guardiola\'s City — high line compresses space, requires elite CBs and a clean press',
+  },
+
+  // ── CLOSING DOWN ────────────────────────────────────────────
+  'close-sit': {
+    label: 'Sit Back',
+    does: [
+      'Players hold shape and do not press — passive defensive posture',
+      'Opposition given time and space on the ball',
+      'Shape is maintained — nobody leaves their position to press',
+      'Good for protecting a lead against a strong opponent',
+    ],
+    enables: ['dline-deep','contain','defensive','offside-no'],
+    conflicts: ['close-allover','dline-high','offside-yes','attacking','overload'],
+    tradeoffs: [
+      'Opposition plays forward comfortably — builds up at their own pace',
+      'No pressing traps — cannot win the ball high up the pitch',
+      'Gets overrun by teams with patient build-up and technical quality',
+    ],
+    attributes: ['Positioning 14+', 'Concentration 14+', 'Teamwork 13+'],
+    realworld: 'Defensive block teams — sit at 5-4-1 and absorb, not press',
+  },
+  'close-ownhalf': {
+    label: 'Own Half',
+    does: [
+      'Players press only when the opposition enters their own defensive half',
+      'Moderate defensive approach — not passive but not aggressive',
+      'Standard FM Mobile closing down setting',
+    ],
+    enables: ['balanced','counter','dline-balanced'],
+    conflicts: ['dline-high','close-allover'],
+    tradeoffs: [
+      'Opposition can build freely in their own half with no pressure',
+      'Transition from mid-block to press can be disorganised',
+    ],
+    attributes: ['Work Rate 12+', 'Positioning 12+'],
+    realworld: 'Standard mid-block — wait for them to come to you before engaging',
+  },
+  'close-allover': {
+    label: 'All Over',
+    does: [
+      'Players press everywhere on the pitch — no safe zone for the opposition',
+      'High press from the front — forces errors in the opposition\'s build-up',
+      'Wins ball in dangerous positions — close to opposition goal',
+      'Constantly disrupts opposition shape and rhythm',
+    ],
+    enables: ['dline-high','attacking','overload','tempo-fast','offside-yes'],
+    conflicts: ['close-sit','dline-deep','contain','defensive','offside-no'],
+    tradeoffs: [
+      'Huge stamina cost — players can\'t press all over for 90 minutes',
+      'If the press is beaten, massive spaces open up immediately',
+      'A calm, technical team bypasses the press easily with quick passing',
+    ],
+    attributes: ['Stamina 15+', 'Pressing 13+', 'Work Rate 15+', 'Aggression 13+ (winning the ball)'],
+    realworld: 'Klopp\'s gegenpressing — press the moment they get the ball, everywhere',
+  },
+
+  // ── TACKLING ────────────────────────────────────────────────
+  'tackle-cautious': {
+    label: 'Cautious',
+    does: [
+      'Players only attempt tackles they are certain to win',
+      'Fewer bookings and fouls — preserves cards for important moments',
+      'Players jockey and position rather than diving in',
+    ],
+    enables: ['contain','defensive'],
+    conflicts: ['close-allover','tackle-committed'],
+    tradeoffs: [
+      'Opposition can carry the ball — dribbles are conceded more easily',
+      'Fouls conceded near the box are reduced but clear chances may be allowed',
+    ],
+    attributes: ['Positioning 14+', 'Anticipation 13+ — jockeying requires reading play'],
+    realworld: 'Yellow card-heavy squads in a second leg — protect the lead, don\'t foul',
+  },
+  'tackle-normal': {
+    label: 'Normal Tackling',
+    does: [
+      'Balanced approach — players challenge when reasonable',
+      'Fair percentage of tackles attempted without recklessness',
+      'Default for most tactical setups',
+    ],
+    enables: [],
+    conflicts: [],
+    tradeoffs: [],
+    attributes: ['Tackling 11+'],
+    realworld: 'Standard play — nothing extreme either way',
+  },
+  'tackle-committed': {
+    label: 'Committed',
+    does: [
+      'Players go in hard — slight chance of winning = attempt the tackle',
+      'Aggressive duels — physically intimidates opposition',
+      'Win the ball more often but risk fouls, bookings, and injuries',
+    ],
+    enables: ['close-allover','attacking','tempo-fast'],
+    conflicts: ['tackle-cautious','contain','dline-deep'],
+    tradeoffs: [
+      'Bookings accumulate — players in yellow card danger',
+      'Fouls near your own box = dangerous free kicks',
+      'Physical players wear down faster — stamina drain is higher',
+    ],
+    attributes: ['Tackling 14+', 'Bravery 13+', 'Aggression must be high but not reckless — Balance aggression with Composure 12+'],
+    realworld: 'Atletico Madrid — physical, committed, not dirty but definitely aggressive',
+  },
+
+  // ── OFFSIDE TRAP ────────────────────────────────────────────
+  'offside-no': {
+    label: 'No Offside Trap',
+    does: [
+      'Defenders play with a deeper, more man-marking oriented approach',
+      'No coordinated step-up to catch attackers offside',
+      'Safer — errors don\'t immediately lead to clean through balls',
+    ],
+    enables: ['dline-deep','dline-balanced','close-sit'],
+    conflicts: ['offside-yes','dline-high','close-allover'],
+    tradeoffs: ['Attackers can sit in front of the defence without being caught'],
+    attributes: [],
+    realworld: 'Most teams — passive defensive line, no coordinated trap',
+  },
+  'offside-yes': {
+    label: 'Offside Trap',
+    does: [
+      'Defenders coordinate a step-up to catch attackers in offside positions',
+      'Works in tandem with high line — compresses space further',
+      'Can neutralise a fast striker by rendering them offside before the ball arrives',
+    ],
+    enables: ['dline-high','close-allover','attacking'],
+    conflicts: ['offside-no','dline-deep','close-sit','contain'],
+    tradeoffs: [
+      'One player stepping up out of sync = clean through ball, no recovery',
+      'Requires extreme concentration and coordination — errors are catastrophic',
+      'Against teams with good movement and timing, the trap is easily beaten',
+    ],
+    attributes: ['Concentration 15+', 'Positioning 15+', 'Anticipation 14+', 'Teamwork 14+ — needs ALL defenders in sync'],
+    realworld: 'Arsenal under Wenger — famous offside trap, required all 4 defenders in perfect sync',
+  },
+
+  // ── TIME WASTING ────────────────────────────────────────────
+  'waste-no': {
+    label: 'No Time Wasting',
+    does: ['Players play at normal pace — no deliberate slowing of the game'],
+    enables: [],
+    conflicts: [],
+    tradeoffs: [],
+    attributes: [],
+    realworld: 'Normal play state',
+  },
+  'waste-yes': {
+    label: 'Time Wasting',
+    does: [
+      'Players deliberately slow down play — take longer over set pieces and throw-ins',
+      'Reduces the opposition\'s time to equalise or score',
+      'Psychologically frustrates opposition teams',
+    ],
+    enables: ['contain','defensive','tempo-slow'],
+    conflicts: ['attacking','overload','tempo-fast','close-allover'],
+    tradeoffs: [
+      'Can disrupt your own rhythm if done too early',
+      'Opposition pressing becomes more intense in frustration',
+      'Referees may add more injury time',
+    ],
+    attributes: ['Composure 13+', 'Flair 11+ (to waste time with skill)'],
+    realworld: 'Any team protecting a narrow lead in the 75th minute',
+  },
+
+  // ── FINAL THIRD ─────────────────────────────────────────────
+  'early-crosses': {
+    label: 'Early Crosses',
+    does: [
+      'Wide players deliver the ball into the box before cutting inside or reaching the byline',
+      'Ball arrives while the box is less organised — defenders haven\'t set yet',
+      'Targets aerial players who can attack the ball in the air',
+      'Works well with target forwards or tall strikers',
+    ],
+    enables: ['width-wide','look-overlap'],
+    conflicts: ['work-into-box','width-narrow','through-balls','pass-short'],
+    tradeoffs: [
+      'Lower quality delivery angle — ball comes from a wider, less dangerous position',
+      'Useless if your striker has poor heading — wasted possession',
+      'Predictable — opposition defends wide areas and deals with crosses',
+    ],
+    attributes: ['Crossing 13+', 'Heading 14+ striker', 'Jumping 13+ striker'],
+    realworld: 'Sam Allardyce sides — direct, wide, early delivery to a big target man',
+  },
+  'shoot-on-sight': {
+    label: 'Shoot on Sight',
+    does: [
+      'Players attempt shots from distance or at first opportunity rather than working into position',
+      'More shots per game but lower conversion rate',
+      'Opposition goalkeeper forced to deal with more attempts',
+      'Can produce speculative goals from unexpected positions',
+    ],
+    enables: ['tempo-fast','attacking','overload'],
+    conflicts: ['work-into-box','pass-short','freedom-disciplined'],
+    tradeoffs: [
+      'Wastes possession — low quality shots give away the ball',
+      'Strikers shoot instead of laying off to better-placed players',
+      'Demoralising if shots are consistently poor — players lose confidence',
+    ],
+    attributes: ['Long Shots 13+', 'Technique 13+', 'Composure 12+ (choosing when to shoot)'],
+    realworld: 'Scholes, Gerrard — midfielders who shoot from range without hesitation',
+  },
+  'run-at-defence': {
+    label: 'Run at Defence',
+    does: [
+      'Players instructed to drive at defenders with the ball rather than passing early',
+      'Creates 1v1 situations and forces defensive errors',
+      'Useful against disorganised or nervous defences',
+      'Draws fouls in dangerous areas',
+    ],
+    enables: ['tempo-fast','attacking','freedom-expressive','width-wide'],
+    conflicts: ['pass-short','freedom-disciplined','contain','defensive','tempo-slow'],
+    tradeoffs: [
+      'Ball is lost more often — dribblers can be robbed and counter attacked',
+      'Risky against stronger, faster defences who win the ball and break',
+      'Creates loose play — shape can break down if runs go wrong',
+    ],
+    attributes: ['Dribbling 14+', 'Pace 13+', 'Flair 13+', 'Bravery 12+ (take the man on)'],
+    realworld: 'Robben, Mbappe — cut inside and run at defenders from wide positions',
+  },
+  'look-overlap': {
+    label: 'Look for Overlap',
+    does: [
+      'Wide players hold the ball and wait for the fullback/wingback to overlap outside them',
+      'Creates a 2v1 situation on the flank — forces defensive decision',
+      'Winger can cut inside while fullback provides width',
+      'Generates crossing opportunities from deeper wide positions',
+    ],
+    enables: ['width-wide','early-crosses'],
+    conflicts: ['width-narrow','focus-centre','through-balls'],
+    tradeoffs: [
+      'Fullback exposed if overlap is cut out and transition happens',
+      'Timing must be right — winger must hold long enough for overlap to arrive',
+      'Stamina drain on overlapping fullbacks',
+    ],
+    attributes: ['Stamina 14+ fullbacks', 'Crossing 13+', 'Off the Ball 13+ winger (timing the hold)'],
+    realworld: 'Trent Alexander-Arnold overlapping — winger holds, fullback arrives late',
+  },
+  'work-into-box': {
+    label: 'Work into Box',
+    does: [
+      'Players instructed to resist shooting until they have a clear chance inside the box',
+      'Patience in the final third — more passing combinations near goal',
+      'Higher quality shots — lower xG per shot but better conversion',
+      'Creates more clinical finishing opportunities',
+    ],
+    enables: ['pass-short','through-balls','freedom-balanced','tempo-slow'],
+    conflicts: ['shoot-on-sight','early-crosses','tempo-fast','run-at-defence'],
+    tradeoffs: [
+      'Can become static — opposition organises their shape while you pass around them',
+      'Against a deep block, running out of ideas and forcing poor shots anyway',
+      'Needs high football intelligence — players who recognise when the chance is there',
+    ],
+    attributes: ['Decisions 14+', 'Passing 13+', 'Technique 13+', 'Off the Ball 13+'],
+    realworld: 'Guardiola\'s City — 20+ passes in the final third, waiting for the right moment',
+  },
+  'through-balls': {
+    label: 'Through Balls',
+    does: [
+      'Players actively look to play balls in behind the defensive line',
+      'Forwards make runs to receive in behind — exploits high lines',
+      'Creates 1v1 situations with the goalkeeper or last defender',
+      'Most dangerous against teams pressing high or playing an offside trap',
+    ],
+    enables: ['tempo-fast','dline-high','attacking','run-at-defence'],
+    conflicts: ['pass-short','work-into-box','dline-deep','contain','width-narrow'],
+    tradeoffs: [
+      'Requires forwards with Pace and Off the Ball to make the runs',
+      'Intercepted through balls leave you exposed on the counter',
+      'Against deep blocks, no space in behind — the ball is won easily',
+    ],
+    attributes: ['Vision 14+ passer', 'Passing 13+', 'Pace 14+ forward', 'Off the Ball 14+ forward'],
+    realworld: 'Salah\'s runs behind the line, fed by Fabinho or Henderson — timed perfectly',
+  },
+
+  // ── PASSING STYLE ───────────────────────────────────────────
+  'pass-short': {
+    label: 'Short Passing',
+    does: [
+      'Players look for the safest nearby option — no risky passes',
+      'More possession cycles — recycling the ball before committing',
+      'Slower build-up but more control and less turnovers',
+    ],
+    enables: ['tempo-slow','work-into-box','freedom-disciplined','width-narrow'],
+    conflicts: ['pass-long','pass-direct','through-balls','tempo-fast','early-crosses'],
+    tradeoffs: [
+      'Easily pressed by high press teams — ball is trapped in tight spaces',
+      'Slow to transition — counter-attacking moments are missed',
+    ],
+    attributes: ['Passing 13+', 'First Touch 13+', 'Technique 13+', 'Composure 13+'],
+    realworld: 'Xavi\'s Barcelona — total short passing game, technical quality throughout',
+  },
+  'pass-mixed': {
+    label: 'Mixed Passing',
+    does: [
+      'Players choose between short and longer passes based on what\'s available',
+      'Flexible — can transition between possession and direct play',
+      'Default for most tactical setups',
+    ],
+    enables: [],
+    conflicts: [],
+    tradeoffs: ['No specific identity — players must read the game themselves'],
+    attributes: ['Decisions 12+'],
+    realworld: 'Standard setup — passing is situational not instructed',
+  },
+  'pass-direct': {
+    label: 'Direct Passing',
+    does: [
+      'Ball moves forward quickly — fewer horizontal passes, more vertical',
+      'Skips midfield lines when possible',
+      'Strikers receive the ball earlier — less time for opposition to organise',
+    ],
+    enables: ['tempo-fast','counter','through-balls','run-at-defence'],
+    conflicts: ['pass-short','work-into-box','tempo-slow','contain'],
+    tradeoffs: [
+      'More possession lost in midfield — direct passes are intercepted more',
+      'Strikers need to hold the ball up or have pace to run onto passes',
+    ],
+    attributes: ['Strength 13+ striker (hold up)', 'Heading 12+ (flick-ons)', 'Long Balls 12+ from deep'],
+    realworld: 'Classic long ball 4-4-2 — direct to the striker, second balls for midfielders',
+  },
+  'pass-long': {
+    label: 'Long Passing',
+    does: [
+      'Players look to switch play with long diagonal balls or play direct to target man',
+      'Bypasses opposition press by going over it',
+      'Changes point of attack quickly',
+    ],
+    enables: ['width-wide','early-crosses','gk-long'],
+    conflicts: ['pass-short','work-into-box','tempo-slow','width-narrow','freedom-disciplined'],
+    tradeoffs: [
+      'Less accurate — long balls are intercepted or go out of play more',
+      'Loses the tactical structure of short passing — can become chaotic',
+    ],
+    attributes: ['Long Balls 14+', 'Technique 13+', 'Vision 12+'],
+    realworld: 'Stoke City route-one — goalkeeper to target man, no midfield involvement',
+  },
+
+  // ── PASSING FOCUS ───────────────────────────────────────────
+  'focus-left': {
+    label: 'Focus Left',
+    does: [
+      'Players directed to advance and build through the left flank',
+      'Central players offer support on the left more often',
+      'Opposition right side is targeted repeatedly',
+    ],
+    enables: ['width-wide','look-overlap','early-crosses'],
+    conflicts: ['focus-right','focus-centre','width-narrow'],
+    tradeoffs: ['Right side underused — opposition can narrow their shape to block left', 'Predictable — opposition knows where the attack is coming from'],
+    attributes: ['Quality left-sided players — weak left side makes this counterproductive'],
+    realworld: 'Teams with a dominant left winger — direct everything to exploit their quality',
+  },
+  'focus-right': {
+    label: 'Focus Right',
+    does: [
+      'Players directed to advance through the right flank',
+      'Mirrors Focus Left — everything runs through the right side',
+    ],
+    enables: ['width-wide','look-overlap','early-crosses'],
+    conflicts: ['focus-left','focus-centre','width-narrow'],
+    tradeoffs: ['Left side underused — predictable build-up pattern'],
+    attributes: ['Quality right-sided players'],
+    realworld: 'Salah-era Liverpool — right overload, everything through Salah\'s channel',
+  },
+  'focus-centre': {
+    label: 'Focus Centre',
+    does: [
+      'Play is directed through the central channels',
+      'Wide players are more supportive than creative',
+      'Central midfielders and forwards are the primary attacking outlet',
+    ],
+    enables: ['width-narrow','through-balls','work-into-box','pass-short'],
+    conflicts: ['focus-left','focus-right','focus-flanks','early-crosses','look-overlap'],
+    tradeoffs: ['Wide players wasted — pace and crossing quality goes unused', 'Opposition can pack the centre'],
+    attributes: ['Central quality — AM, MC, or ST who can create and finish centrally'],
+    realworld: 'Tiki-Taka centrism — Iniesta, Xavi, Messi operating in tight central spaces',
+  },
+  'focus-flanks': {
+    label: 'Both Flanks',
+    does: [
+      'Attack is spread across both wide areas simultaneously',
+      'Stretches the opposition — they cannot cover both flanks at once',
+      'Creates space in the centre as defenders are pulled wide',
+    ],
+    enables: ['width-wide','look-overlap','early-crosses'],
+    conflicts: ['focus-centre','width-narrow'],
+    tradeoffs: ['Central players underused — through balls and central combinations less frequent'],
+    attributes: ['Quality on both flanks — imbalanced wide players makes one side a weakness'],
+    realworld: 'Guardiola\'s City with Sane and Sterling — both flanks active simultaneously',
+  },
+  'focus-mixed': {
+    label: 'Mixed Focus',
+    does: [
+      'No specific directional instruction — players attack where the space is',
+      'Adapts based on opposition shape',
+      'Default',
+    ],
+    enables: [],
+    conflicts: [],
+    tradeoffs: ['No specific overload created — relies on individual decisions'],
+    attributes: ['Decisions 13+ — players must read where the space is'],
+    realworld: 'Standard — attack wherever the gaps appear',
+  },
+
+  // ── GK DISTRIBUTION ─────────────────────────────────────────
+  'gk-short': {
+    label: 'Short GK Dist.',
+    does: [
+      'GK plays out to nearby defenders — starts build-up from the back',
+      'Maintains possession and tempo control from the goalkeeper',
+      'Draws opposition press out of their shape',
+    ],
+    enables: ['pass-short','tempo-slow','control','freedom-disciplined'],
+    conflicts: ['gk-long','pass-long','tempo-fast','counter'],
+    tradeoffs: [
+      'High press teams target the GK distribution — can win the ball dangerously close to goal',
+      'Requires technically confident defenders — a mistake here = goal',
+    ],
+    attributes: ['Passing 12+ GK', 'Composure 13+ GK', 'Technique 12+ defenders'],
+    realworld: 'Ederson for City — plays out short, draws press, transitions into attack',
+  },
+  'gk-mixed': {
+    label: 'Mixed GK Dist.',
+    does: [
+      'GK chooses between short and long based on what is available',
+      'Provides flexibility — not committed to one approach',
+      'Default',
+    ],
+    enables: [],
+    conflicts: [],
+    tradeoffs: ['GK must have good decision-making to use this effectively'],
+    attributes: ['Decisions 12+ GK'],
+    realworld: 'Standard — GK reads the press and decides',
+  },
+  'gk-long': {
+    label: 'Long GK Dist.',
+    does: [
+      'GK launches the ball long — bypasses the midfield entirely',
+      'Skips opposition press — if they press high, the long ball goes over them',
+      'Connects to a target forward or wide player on the half turn',
+    ],
+    enables: ['pass-long','pass-direct','counter','tempo-fast'],
+    conflicts: ['gk-short','pass-short','tempo-slow','control'],
+    tradeoffs: [
+      'Loses possession more — long balls are contested and often won by opposition',
+      'Abandons the build-up entirely — no midfield involvement',
+    ],
+    attributes: ['Kicking 14+ GK', 'Heading 13+ target forward', 'Strength 13+ forward'],
+    realworld: 'Traditional long-ball — GK bypasses everyone and finds the big striker',
+  },
+};
+
+// ── Conflict detection ───────────────────────────────────────
+function getConflicts(id) {
+  const instr = INSTRUCTIONS[id];
+  if(!instr) return [];
+  // Find all selected instructions that conflict with this one
+  return activeSelections.filter(sel => {
+    const selInstr = INSTRUCTIONS[sel];
+    return selInstr && (selInstr.conflicts||[]).includes(id) || (instr.conflicts||[]).includes(sel);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let currentCategory = 'shape';
+let selectedInstruction = null;
+let activeSelections = {}; // sectionLabel → selected id (for sliders), or Set of ids (for toggles)
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+function setCategory(cat) {
+  currentCategory = cat;
+  selectedInstruction = null;
+  document.querySelectorAll('.ctab').forEach((t,i) => {
+    t.classList.toggle('active', ['shape','defence','attack','verdict'][i]===cat);
+  });
+  const isVerdict = cat === 'verdict';
+  document.getElementById('instr-panel').style.display    = isVerdict ? 'none' : 'block';
+  document.getElementById('result-panel').style.display   = isVerdict ? 'none' : 'block';
+  document.getElementById('verdict-panel').style.display  = isVerdict ? 'block' : 'none';
+  if(isVerdict) renderVerdict();
+  else { renderInstrPanel(); renderResult(); }
+}
+
+function renderInstrPanel() {
+  const cat = CATEGORIES[currentCategory];
+  const el = document.getElementById('instr-panel');
+  el.innerHTML = cat.sections.map(sec => {
+    const secId = sec.label;
+
+    if(sec.type === 'row-pair') {
+      // Final Third grid — two columns, three rows, pick one or none per row
+      const rows = sec.rows.map((pair, rowIdx) => {
+        return `<div class="instr-row" style="gap:3px;margin-bottom:3px">` +
+          pair.map(id => {
+            const instr = INSTRUCTIONS[id];
+            if(!instr) return '';
+            const rowKey = secId + '_row' + rowIdx;
+            const isActive = activeSelections[rowKey] === id;
+            const conflicts = getConflictsForButton(id);
+            const hasConflict = conflicts.length > 0 && isActive;
+            return `<div class="instr-btn${isActive?' toggle-on':''}${selectedInstruction===id?' selected':''}"
+              style="flex:1"
+              onclick="selectInstruction('${id}','${rowKey}',false)"
+              title="${instr.label}">
+              ${instr.label}
+              ${hasConflict ? '<span class="conf-dot" style="background:#ff6b6b"></span>' : ''}
+            </div>`;
+          }).join('') +
+        `</div>`;
+      }).join('');
+      return `<div class="instr-section">
+        <div class="sec-label">${sec.label}</div>
+        ${rows}
+      </div>`;
+    }
+
+    // Standard slider or toggle
+    const isToggle = sec.type === 'toggle';
+    const btns = sec.options.map(id => {
+      const instr = INSTRUCTIONS[id];
+      if(!instr) return '';
+      const isActive = isToggle
+        ? (activeSelections[secId] && activeSelections[secId].has(id))
+        : (activeSelections[secId] === id);
+      const conflicts = getConflictsForButton(id);
+      const hasConflict = conflicts.length > 0 && isActive;
+      return `<div class="instr-btn${isActive?' toggle-on':''}${selectedInstruction===id?' selected':''}"
+        onclick="selectInstruction('${id}','${secId}',${isToggle})"
+        title="${instr.label}">
+        ${instr.label}
+        ${hasConflict ? '<span class="conf-dot" style="background:#ff6b6b"></span>' : ''}
+      </div>`;
+    }).join('');
+    return `<div class="instr-section">
+      <div class="sec-label">${sec.label}</div>
+      <div class="instr-row">${btns}</div>
+    </div>`;
+  }).join('');
+}
+
+function getConflictsForButton(id) {
+  const instr = INSTRUCTIONS[id];
+  if(!instr) return [];
+  const allActive = Object.values(activeSelections).flatMap(v =>
+    v instanceof Set ? [...v] : (v ? [v] : [])
+  );
+  return allActive.filter(sel => sel !== id && (
+    (INSTRUCTIONS[sel]?.conflicts||[]).includes(id) ||
+    (instr.conflicts||[]).includes(sel)
+  ));
+}
+
+function selectInstruction(id, secId, isToggle) {
+  selectedInstruction = id;
+
+  if(isToggle) {
+    if(!activeSelections[secId]) activeSelections[secId] = new Set();
+    if(activeSelections[secId].has(id)) activeSelections[secId].delete(id);
+    else activeSelections[secId].add(id);
+  } else {
+    activeSelections[secId] = activeSelections[secId] === id ? null : id;
+  }
+
+  renderInstrPanel();
+  renderResult();
+  renderActiveBar();
+}
+
+function renderActiveBar() {
+  const el = document.getElementById('active-bar');
+  const allActive = Object.values(activeSelections).flatMap(v =>
+    v instanceof Set ? [...v] : (v ? [v] : [])
+  );
+
+  // Update verdict tab to show it's ready
+  const vTab = document.getElementById('verdict-tab');
+  if(vTab) {
+    if(allActive.length) {
+      vTab.style.borderColor = '#e8c84a66';
+      vTab.style.color = '#aaa';
+    } else {
+      vTab.style.borderColor = '#333';
+      vTab.style.color = '#444';
+    }
+  }
+
+  if(!allActive.length) {
+    el.innerHTML = '<span style="color:#333;font-size:0.54rem">No instructions selected</span>';
+    return;
+  }
+  el.innerHTML = allActive.map(id => {
+    const instr = INSTRUCTIONS[id];
+    const conflicts = getConflictsForButton(id);
+    return `<div class="active-tag">
+      ${instr?.label||id}
+      ${conflicts.length ? `<span class="conflict-badge">⚡</span>` : ''}
+      <span class="atag-x" onclick="clearInstruction('${id}')">✕</span>
+    </div>`;
+  }).join('');
+}
+
+function clearInstruction(id) {
+  Object.keys(activeSelections).forEach(sec => {
+    if(activeSelections[sec] instanceof Set) activeSelections[sec].delete(id);
+    else if(activeSelections[sec] === id) activeSelections[sec] = null;
+  });
+  if(selectedInstruction === id) selectedInstruction = null;
+  renderInstrPanel();
+  renderResult();
+  renderActiveBar();
+}
+
+function renderResult() {
+  const el = document.getElementById('result-panel');
+  if(!selectedInstruction) {
+    el.innerHTML = '<div class="empty-state">Select an instruction above to see its consequences</div>';
+    return;
+  }
+  const instr = INSTRUCTIONS[selectedInstruction];
+  if(!instr) return;
+
+  const conflicts = getConflictsForButton(selectedInstruction);
+  const enabledActive = (instr.enables||[]).filter(e => {
+    const allActive = Object.values(activeSelections).flatMap(v =>
+      v instanceof Set ? [...v] : (v ? [v] : [])
+    );
+    return allActive.includes(e);
+  });
+
+  const conflictCards = conflicts.map(cid => {
+    const ci = INSTRUCTIONS[cid];
+    return `<div class="conflict-card">
+      <div class="conf-title">⚡ Conflicts with: ${ci?.label||cid}</div>
+      These two instructions pull in opposite directions. Having both active reduces the effectiveness of each.
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="result-panel">
+      <div class="rp-title">${instr.label}</div>
+      <div class="rp-subtitle">${currentCategory.toUpperCase()} INSTRUCTION</div>
+
+      <div class="rp-section">
+        <div class="rp-section-title" style="color:#77aaff">What it does</div>
+        ${(instr.does||[]).map(d=>`<div class="rp-item">→ ${d}</div>`).join('')}
+      </div>
+
+      ${instr.tradeoffs?.length ? `
+      <div class="rp-section">
+        <div class="rp-section-title" style="color:#ff8855">Trade-offs</div>
+        ${instr.tradeoffs.map(t=>`<div class="rp-item bad">⚠️ ${t}</div>`).join('')}
+      </div>` : ''}
+
+      ${instr.enables?.length ? `
+      <div class="rp-section">
+        <div class="rp-section-title" style="color:#55cc77">Works well with</div>
+        ${instr.enables.map(e => {
+          const ei = INSTRUCTIONS[e];
+          const isOn = enabledActive.includes(e);
+          return `<div class="rp-item ${isOn?'good':'tip'}">
+            ${isOn?'✅':'→'} ${ei?.label||e}${isOn?' — already active':''}</div>`;
+        }).join('')}
+      </div>` : ''}
+
+      ${instr.conflicts?.length ? `
+      <div class="rp-section">
+        <div class="rp-section-title" style="color:#ff6b6b">Conflicts with</div>
+        ${instr.conflicts.map(c => {
+          const ci = INSTRUCTIONS[c];
+          const isOn = getConflictsForButton(selectedInstruction).includes(c);
+          return `<div class="rp-item ${isOn?'bad':''}">
+            ${isOn?'❌ ACTIVE —':' ✗'} ${ci?.label||c}</div>`;
+        }).join('')}
+      </div>` : ''}
+
+      ${instr.attributes?.length ? `
+      <div class="rp-section">
+        <div class="rp-section-title" style="color:#e8c84a">Player attributes needed</div>
+        ${instr.attributes.map(a=>`<div class="rp-item warn">• ${a}</div>`).join('')}
+      </div>` : ''}
+
+      ${instr.realworld ? `
+      <div class="rp-section">
+        <div class="rp-section-title" style="color:#aa77ff">Real world reference</div>
+        <div class="rp-item ref">🎙 ${instr.realworld}</div>
+      </div>` : ''}
+
+      ${conflictCards}
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VERDICT ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+function getAllActive() {
+  return Object.values(activeSelections).flatMap(v =>
+    v instanceof Set ? [...v] : (v ? [v] : [])
+  );
+}
+
+function has(id) { return getAllActive().includes(id); }
+
+function buildVerdict() {
+  const active = getAllActive();
+
+  // Always yield a verdict — even with nothing selected
+  const noInstructions = active.length === 0;
+
+  // ── Tactical health score ────────────────────────────────
+  let totalConflicts = 0;
+  active.forEach(id => { totalConflicts += getConflictsForButton(id).length; });
+  totalConflicts = totalConflicts / 2;
+  const healthPct = noInstructions ? 50 : Math.max(10, Math.round(100 - (totalConflicts * 18)));
+
+  // ── Style identity ────────────────────────────────────────
+  let style = 'Undefined'; let styleColor = '#666'; let styleDesc = '';
+
+  const isHigh    = has('dline-high') || has('close-allover');
+  const isDeep    = has('dline-deep') || has('close-sit');
+  const isDirect  = has('pass-direct') || has('pass-long') || has('through-balls');
+  const isShort   = has('pass-short') || has('work-into-box');
+  const isFast    = has('tempo-fast') || has('run-at-defence');
+  const isSlow    = has('tempo-slow');
+  const isWide    = has('width-wide') || has('early-crosses') || has('look-overlap');
+  const isNarrow  = has('width-narrow') || has('focus-centre');
+  const isCounter = has('counter') || has('gk-short') || has('through-balls');
+  const isAttk    = has('attacking') || has('overload');
+  const isDef     = has('defensive') || has('contain');
+  const hasAny    = active.length > 0;
+
+  // Contradictory combos get their own identity — don't crash, name the chaos
+  const isContradictory = (isHigh && isDeep) || (isDef && isAttk) ||
+    (has('tempo-fast') && has('tempo-slow')) || (has('close-allover') && has('close-sit'));
+
+  if(noInstructions)                                { style='No Instructions'; styleColor='#444'; styleDesc='Pick instructions in Shape, Defence, and Attack to see your tactical identity'; }
+  else if(isContradictory)                          { style='Contradictory';   styleColor='#ff3333'; styleDesc='Conflicting instructions pulling in opposite directions — pick a clearer direction'; }
+  else if(has('overload'))                          { style='Total Attack';       styleColor='#ff3333'; styleDesc='Maximum commitment forward — dangerous and open'; }
+  else if(has('attacking') && isHigh && isFast)     { style='High Press / Gegenpress'; styleColor='#ff6644'; styleDesc='Win it high, play it fast, press immediately'; }
+  else if(has('attacking') && isWide)               { style='Expansive Attack';   styleColor='#ff8844'; styleDesc='Wide, aggressive, looking to create from all areas'; }
+  else if(has('attacking'))                         { style='Attacking';          styleColor='#ff9944'; styleDesc='Forward-oriented, accept defensive risk'; }
+  else if(isDeep && isCounter && isDirect)          { style='Counter-Attack';     styleColor='#cc44ff'; styleDesc='Absorb, win the ball, release quickly in behind'; }
+  else if(isDeep && isDef)                          { style='Low Block';           styleColor='#5577cc'; styleDesc='Compact, organised, hard to beat'; }
+  else if(isShort && isSlow && !isHigh)             { style='Possession';         styleColor='#00dd77'; styleDesc='Patient, technical, control through the ball'; }
+  else if(isShort && has('control'))                { style='Controlled Possession'; styleColor='#44ddcc'; styleDesc='Structured possession with organised pressing'; }
+  else if(isHigh && isShort)                        { style='Positional Play';    styleColor='#33aaff'; styleDesc='Press high, play short, dominate territory'; }
+  else if(isHigh && isDirect)                       { style='High Press / Direct';styleColor='#ffcc00'; styleDesc='Win it high and go direct when you have it'; }
+  else if(isHigh)                                   { style='High Block';          styleColor='#ffaa44'; styleDesc='Aggressive defensive line, compact shape'; }
+  else if(isDirect && isFast)                       { style='Direct / Vertical';  styleColor='#ff6600'; styleDesc='Fast, forward, minimal time on the ball'; }
+  else if(isDef)                                    { style='Defensive';          styleColor='#5577cc'; styleDesc='Cautious, organised, hard to break down'; }
+  else if(has('balanced'))                          { style='Balanced';           styleColor='#888888'; styleDesc='No strong identity — adaptable'; }
+  else                                              { style='Mixed';              styleColor='#666666'; styleDesc='Multiple layers active — define a clearer core identity'; }
+
+  // ── Attacking profile ─────────────────────────────────────
+  const atkProfile = [];
+  if(has('early-crosses'))   atkProfile.push('Wide early deliveries — targets aerial forwards');
+  if(has('look-overlap'))    atkProfile.push('Overlapping fullbacks — creates 2v1 on the flank');
+  if(has('through-balls'))   atkProfile.push('Balls in behind — exploits high lines and space');
+  if(has('run-at-defence'))  atkProfile.push('Dribbles and 1v1s — individual skill in final third');
+  if(has('shoot-on-sight'))  atkProfile.push('Shots from range — volume over quality');
+  if(has('work-into-box'))   atkProfile.push('Patient build-up — quality over quantity of chances');
+  if(has('focus-left'))      atkProfile.push('Left-channel overload — everything through the left');
+  if(has('focus-right'))     atkProfile.push('Right-channel overload — everything through the right');
+  if(has('focus-centre'))    atkProfile.push('Central overload — tight passing combinations through the middle');
+  if(has('focus-flanks'))    atkProfile.push('Dual flank width — stretches opposition simultaneously');
+  if(has('pass-long'))       atkProfile.push('Long diagonal switches — changes point of attack quickly');
+  if(has('pass-direct'))     atkProfile.push('Direct passing — skips midfield, quick vertical play');
+  if(has('gk-long'))         atkProfile.push('GK launches long — bypasses press, targets aerial players');
+  if(!atkProfile.length)     atkProfile.push('No clear attacking instruction — relies on individual decisions');
+
+  // ── Defensive profile ─────────────────────────────────────
+  const defProfile = [];
+  if(has('dline-high'))        defProfile.push('High line — compact shape, catches attackers offside');
+  if(has('dline-deep'))        defProfile.push('Deep line — sits back, absorbs, hard to get behind');
+  if(has('close-allover'))     defProfile.push('High press — wins ball in dangerous positions');
+  if(has('close-sit'))         defProfile.push('Passive block — let them come, hold shape');
+  if(has('close-ownhalf'))     defProfile.push('Mid-block — presses only when ball enters own half');
+  if(has('offside-yes'))       defProfile.push('Coordinated offside trap — requires total sync');
+  if(has('tackle-committed'))  defProfile.push('Aggressive tackling — physical, risky, wins duels');
+  if(has('tackle-cautious'))   defProfile.push('Jockeying — patient defending, avoids fouls');
+  if(has('waste-yes'))         defProfile.push('Time wasting — slows game down when protecting a lead');
+  if(!defProfile.length)       defProfile.push('No strong defensive instruction — standard shape');
+
+  // ── Vulnerabilities ───────────────────────────────────────
+  const vulns = [];
+  if(has('dline-high') && !has('offside-yes'))
+    vulns.push('Pace in behind — fast striker can run onto through balls past your high line');
+  if(has('dline-high') && has('offside-yes'))
+    vulns.push('Mistimed offside trap — one defender out of sync = clean through ball');
+  if(has('dline-deep') || has('close-sit'))
+    vulns.push('Patient build-up teams — given time and space in front of your block');
+  if(has('width-wide') || has('look-overlap'))
+    vulns.push('Central counter-attacks — large gaps between players in transition');
+  if(has('width-narrow') || has('focus-centre'))
+    vulns.push('Wide play — flanks are open, crosses will come freely');
+  if(has('close-allover') || has('attacking'))
+    vulns.push('Ball over the press — technical team plays through your press easily');
+  if(has('tempo-fast') || has('run-at-defence'))
+    vulns.push('Strong physical defenders — aggressive dribblers are robbed and countered');
+  if(has('through-balls') && has('pass-direct'))
+    vulns.push('Interception-based teams — direct play is read and cut out by organised midfields');
+  if(has('shoot-on-sight'))
+    vulns.push('Poor shooting quality wastes possession — gives organised teams easy transitions');
+  if(has('freedom-expressive'))
+    vulns.push('Shape collapses — players go freelance and defensive structure breaks');
+  if(has('overload') || (has('attacking') && has('close-allover')))
+    vulns.push('Any counterattack — no cover behind, one turnover = clear chance');
+  if(has('tackle-committed'))
+    vulns.push('Technical players who draw fouls — yellow card accumulation');
+  if(has('offside-yes') && !has('dline-high'))
+    vulns.push('Offside trap without a high line is inconsistent — defenders not in sync');
+
+  // ── Opponent profile that beats this ─────────────────────
+  const beatenBy = [];
+  if(isHigh && has('close-allover'))
+    beatenBy.push('A team with a calm technical midfielder who can break a press — gets behind your high line');
+  if(isDeep && isDef)
+    beatenBy.push('Patient possession teams with Through Balls — pick apart the block slowly');
+  if(isCounter && isDirect)
+    beatenBy.push('Teams that press high and prevent your build-up — your counter needs space to work');
+  if(isWide)
+    beatenBy.push('Narrow defensive blocks with strong CBs and aerial ability — nullify your crosses');
+  if(has('shoot-on-sight'))
+    beatenBy.push('Teams with a dominant goalkeeper and organised backline who soak up low-quality shots');
+  if(has('freedom-expressive'))
+    beatenBy.push('Disciplined, organised pressing teams — they win the ball when your shape breaks');
+  if(has('work-into-box') && isSlow)
+    beatenBy.push('Well-organised deep blocks — patient play runs out of ideas against 10 behind the ball');
+  if(!atkProfile.length) atkProfile.push(noInstructions ? 'No attacking instructions selected yet' : 'No clear attacking instruction — relies on individual decisions');
+  if(!defProfile.length) defProfile.push(noInstructions ? 'No defensive instructions selected yet' : 'No strong defensive instruction — standard shape');
+  if(!vulns.length)      vulns.push('No specific vulnerabilities identified from current instructions');
+  if(!beatenBy.length)   beatenBy.push('Balanced setup — no single opponent type specifically exploits your shape');
+
+  // ── Conflict pairs ────────────────────────────────────────
+  const conflictPairs = [];
+  active.forEach(id => {
+    getConflictsForButton(id).forEach(cid => {
+      const key = [id,cid].sort().join('|');
+      if(!conflictPairs.find(p=>p.key===key))
+        conflictPairs.push({key, a:INSTRUCTIONS[id]?.label||id, b:INSTRUCTIONS[cid]?.label||cid});
+    });
+  });
+
+  return {
+    style, styleColor, styleDesc,
+    healthPct, conflictPairs,
+    atkProfile, defProfile, vulns, beatenBy,
+    activeCount: active.length,
+    noInstructions,
+  };
+}
+
+function renderVerdict() {
+  const el = document.getElementById('verdict-panel');
+  if(!el) return;
+  const v = buildVerdict();
+
+  if(!v) {
+    el.innerHTML = '<div class="verd-empty">Select instructions in Shape, Defence, and Attack — then come back here for your verdict</div>';
+    return;
+  }
+
+  const hColor = v.healthPct >= 70 ? '#55cc77' : v.healthPct >= 45 ? '#e8c84a' : '#ff6b6b';
+  const hLabel = v.healthPct >= 70 ? 'Coherent' : v.healthPct >= 45 ? 'Some conflicts' : 'Contradictory';
+
+  el.innerHTML = `
+    <!-- Style identity -->
+    <div class="verd-card" style="border-color:${v.styleColor}33">
+      <div class="vc-title" style="color:${v.styleColor}">🎯 Tactical Identity</div>
+      <div class="style-badge" style="background:${v.styleColor}22;border:1px solid ${v.styleColor};color:${v.styleColor}">${v.style}</div>
+      <div class="verd-item" style="color:#aaa">${v.styleDesc}</div>
+    </div>
+
+    <!-- Tactical health -->
+    <div class="verd-card" style="border-color:${hColor}33">
+      <div class="vc-title" style="color:${hColor}">🔧 Tactical Coherence — ${hLabel} (${v.healthPct}%)</div>
+      <div class="health-bar-wrap">
+        <div class="health-bar" style="width:${v.healthPct}%;background:${hColor}"></div>
+      </div>
+      ${v.conflictPairs.length
+        ? v.conflictPairs.map(p=>`<div class="verd-item neg">⚡ ${p.a} conflicts with ${p.b}</div>`).join('')
+        : '<div class="verd-item pos">✅ No active conflicts — shape is internally consistent</div>'
+      }
+    </div>
+
+    <!-- Attack + Defence grid -->
+    <div class="verd-grid">
+      <div class="verd-card">
+        <div class="vc-title" style="color:#55cc77">⚽ How you\'ll score</div>
+        ${v.atkProfile.map(a=>`<div class="verd-item pos">→ ${a}</div>`).join('')}
+      </div>
+      <div class="verd-card">
+        <div class="vc-title" style="color:#77aaff">🛡 How you\'ll defend</div>
+        ${v.defProfile.map(d=>`<div class="verd-item tip">→ ${d}</div>`).join('')}
+      </div>
+    </div>
+
+    <!-- Vulnerabilities -->
+    <div class="verd-card" style="border-color:#3a1111">
+      <div class="vc-title" style="color:#ff6b6b">⚠️ Vulnerabilities</div>
+      ${v.vulns.length
+        ? v.vulns.map(u=>`<div class="verd-item neg">• ${u}</div>`).join('')
+        : '<div class="verd-item" style="color:#444">No specific vulnerabilities identified</div>'
+      }
+    </div>
+
+    <!-- Beaten by -->
+    <div class="verd-card" style="border-color:#33112a">
+      <div class="vc-title" style="color:#cc77ff">👁 What beats this setup</div>
+      ${v.beatenBy.map(b=>`<div class="verd-item ref">• ${b}</div>`).join('')}
+    </div>
+
+  `;
+}
+
+renderInstrPanel();
+renderResult();
+renderActiveBar();
+</script>
+
+<script>
+if('serviceWorker' in navigator) {
+  const sw = `
+    const CACHE = 'fm-tools-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', self.location.href])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return res;
+      }).catch(() => caches.match('./'))));
+    });
+  `;
+  const blob = new Blob([sw], {type:'application/javascript'});
+  const url = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).then(() => URL.revokeObjectURL(url));
+}
+</script>
+
+</body>
+</html>
