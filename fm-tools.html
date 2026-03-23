@@ -1,0 +1,1792 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA -->
+  <meta name="application-name" content="FM Set Pieces">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FM SP">
+  <meta name="description" content="FM Set Piece Designer — Corners, Free Kicks, Analysis">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#e8c84a">
+  <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22FM%20Set%20Pieces%22%2C%22short_name%22%3A%22FM%20SP%22%2C%22description%22%3A%22FM%20Set%20Piece%20Designer%20%E2%80%94%20Corners%2C%20Free%20Kicks%2C%20Analysis%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230e0e0e%22%2C%22theme_color%22%3A%22%23e8c84a%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D'http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg'%2520viewBox%253D'0%25200%2520100%2520100'%253E%253Crect%2520width%253D'100'%2520height%253D'100'%2520fill%253D'%25230e0e0e'%252F%253E%253Ctext%2520y%253D'.9em'%2520font-size%253D'80'%2520x%253D'50%2525'%2520dominant-baseline%253D'middle'%2520text-anchor%253D'middle'%253E%25E2%259A%25BD%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+<title>FM Tools</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background:#0e0e0e; color:white; font-family:monospace;
+  padding:14px; display:flex; flex-direction:column;
+  align-items:center; gap:10px; min-height:100vh;
+}
+h2 { color:#e8c84a; letter-spacing:3px; font-size:1.1rem; margin-top:4px; }
+.subtitle { color:#444; font-size:0.58rem; letter-spacing:1.5px; text-transform:uppercase; }
+.w { width:min(820px,97vw); }
+
+/* TABS */
+.main-tabs { display:flex; gap:4px; width:min(820px,97vw); }
+.mtab {
+flex:1; padding:8px; text-align:center; font-family:monospace;
+font-size:0.7rem; background:#1a1a1a; border:1px solid #333;
+border-radius:4px; cursor:pointer; color:#666; transition:all 0.15s;
+}
+.mtab:hover { border-color:#666; color:#aaa; }
+.mtab.active { background:#2a2a18; border-color:#e8c84a; color:#e8c84a; }
+
+.panel { width:min(820px,97vw); display:none; }
+.panel.active { display:block; }
+
+/* SUB-TABS */
+.sub-tabs { display:flex; gap:4px; margin-bottom:10px; flex-wrap:wrap; }
+.stab {
+padding:6px 12px; font-family:monospace; font-size:0.65rem;
+background:#181818; border:1px solid #2a2a2a; border-radius:4px;
+cursor:pointer; color:#666; transition:all 0.15s;
+}
+.stab:hover { border-color:#666; color:#aaa; }
+.stab.active { background:#222211; border-color:#e8c84a; color:#e8c84a; font-weight:bold; }
+
+/* ═══════════════════════════════════════════
+SET PIECE DESIGNER — FM Mobile style
+═══════════════════════════════════════════ */
+.sp-pitch {
+width:100%;
+aspect-ratio:0.72;
+background:linear-gradient(180deg,#1a3a1a 0%,#1e4a1e 50%,#1a3a1a 100%);
+border:2px solid #2a5a2a;
+border-radius:4px;
+position:relative;
+overflow:hidden;
+}
+
+/* Pitch line markings */
+.goal-line {
+position:absolute; top:0; left:20%; right:20%;
+height:4px; background:rgba(255,255,255,0.5);
+}
+.pen-area {
+position:absolute; top:0; left:12%; right:12%; height:30%;
+border:1.5px solid rgba(255,255,255,0.25); border-top:none;
+}
+.six-yard-box {
+position:absolute; top:0; left:28%; right:28%; height:12%;
+border:1.5px solid rgba(255,255,255,0.2); border-top:none;
+}
+.pen-spot {
+position:absolute; top:23%; left:50%;
+transform:translate(-50%,-50%);
+width:4px; height:4px; border-radius:50%;
+background:rgba(255,255,255,0.35);
+}
+.sp-midline {
+position:absolute; top:55%; left:0; right:0;
+height:1px; background:rgba(255,255,255,0.1);
+}
+
+@keyframes pulse {
+0%,100% { opacity:0.9; transform:translate(-50%,-50%) scale(1); }
+50%      { opacity:0.5; transform:translate(-50%,-50%) scale(1.2); }
+}
+
+/* Zone grid overlay */
+.sp-grid {
+position:absolute; top:0; left:0; right:0; bottom:0;
+display:grid;
+grid-template-columns:repeat(5,1fr);
+grid-template-rows:repeat(6,1fr);
+pointer-events:none; z-index:1;
+}
+.sp-zone { border:1px solid rgba(255,255,255,0.05); }
+.sp-zone.z-start { background:rgba(255,200,0,0.18); border-color:rgba(255,200,0,0.4); }
+.sp-zone.z-end   { background:rgba(0,220,100,0.15); border-color:rgba(0,220,100,0.35); }
+.sp-zone.z-path  { background:rgba(100,160,255,0.08); }
+
+/* Arrow SVG layer */
+.sp-arrows { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:4; }
+
+/* Ball */
+.sp-ball {
+position:absolute;
+width:12px; height:12px; border-radius:50%;
+background:white; border:1.5px solid #aaa;
+transform:translate(-50%,-50%);
+box-shadow:0 1px 3px rgba(0,0,0,0.5);
+z-index:10;
+}
+
+/* Player tokens — FM Mobile style badges */
+.sp-player {
+position:absolute;
+width:34px; height:20px;
+border-radius:3px;
+display:flex; align-items:center; justify-content:center;
+font-size:0.52rem; font-weight:bold;
+cursor:grab;
+transform:translate(-50%,-50%);
+transition:box-shadow 0.15s;
+user-select:none;
+z-index:5;
+}
+.sp-player:hover { box-shadow:0 0 0 2px #e8c84a; z-index:20; }
+.sp-player.dragging { cursor:grabbing; box-shadow:0 0 0 3px #e8c84a; z-index:99; }
+.sp-player .pos-badge {
+background:rgba(0,0,0,0.5); border-radius:2px;
+padding:1px 3px; font-size:0.44rem; color:rgba(255,255,255,0.7);
+margin-right:2px;
+}
+.sp-player .instr-badge {
+font-size:0.5rem; font-weight:900;
+color:white;
+}
+
+/* Corner flag */
+.sp-corner { position:absolute; font-size:0.8rem; }
+
+/* Distribution options */
+.dist-grid {
+display:grid; grid-template-columns:1fr 1fr 1fr;
+gap:3px;
+}
+.dist-btn {
+background:#181818; border:1px solid #2a2a2a; border-radius:3px;
+padding:4px 3px; font-size:0.56rem; color:#666;
+cursor:pointer; text-align:center; transition:all 0.15s;
+}
+.dist-btn:hover { border-color:#777; color:#aaa; }
+.dist-btn.active { background:#2a1a40; border-color:#9966ff; color:#bb88ff; font-weight:bold; }
+
+/* Player instruction list — matches FM Mobile right panel */
+.sp-pl-row {
+display:flex; align-items:center; gap:5px;
+background:#141414; border:1px solid #1e1e1e; border-radius:4px;
+padding:5px 7px; margin-bottom:3px;
+font-size:0.6rem;
+}
+.sp-pl-badge {
+width:26px; height:16px; border-radius:2px;
+display:flex; align-items:center; justify-content:center;
+font-size:0.48rem; font-weight:bold; flex-shrink:0;
+}
+.sp-pl-name { flex:1; min-width:0; overflow:hidden; }
+.sp-pl-role {
+font-size:0.52rem; color:#aaa; overflow:hidden;
+text-overflow:ellipsis; white-space:nowrap;
+}
+.sp-pl-name .pl-name { color:#ccc; font-size:0.58rem; }
+.sp-instr-sel {
+flex-shrink:0; background:#1a1a2a; border:1px solid #3344aa;
+border-radius:3px; padding:2px 5px; font-size:0.52rem;
+font-family:monospace; color:#8899ff; cursor:pointer;
+font-weight:bold; min-width:32px; text-align:center;
+}
+.sp-instr-sel:hover { background:#222233; border-color:#6677cc; }
+
+/* Analysis box */
+.sp-analysis {
+background:#111; border:1px solid #1e1e1e; border-radius:5px;
+padding:10px 12px; font-size:0.63rem; line-height:1.7; margin-top:8px;
+}
+.sp-analysis .title { color:#e8c84a; font-size:0.56rem; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.sp-analysis ul { padding-left:13px; color:#777; }
+.sp-analysis li { margin-bottom:3px; }
+
+/* slider-style instruction selector */
+.instr-btn {
+background:#141414; border:1px solid #222; border-radius:5px;
+padding:8px 10px; font-size:0.62rem; color:#666;
+cursor:pointer; transition:all 0.15s; text-align:left;
+}
+.instr-btn:hover { border-color:#555; color:#aaa; }
+.instr-btn.active { border-color:#e8c84a; color:#e8c84a; background:#1a1a10; }
+.instr-btn .ib-cat { font-size:0.5rem; color:#444; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
+.instr-btn.active .ib-cat { color:#888; }
+
+.divider { width:100%; border:none; border-top:1px solid #181818; margin:4px 0; }
+</style>
+
+</head>
+<body>
+
+<h2>FM TOOLS</h2>
+<p class="subtitle">Set Piece Designer</p>
+
+<!-- ═══════════════════════════════════════════════════════
+     SET PIECE PANEL
+═══════════════════════════════════════════════════════ -->
+
+<div class="panel active w" id="panel-sp">
+
+  <!-- Formation selector -->
+
+  <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+    <span style="font-size:0.56rem;color:#555;text-transform:uppercase;letter-spacing:1px">Formation:</span>
+    <select id="sp-formation" onchange="loadSPFormation(this.value)" style="font-size:0.65rem;padding:4px 8px;flex:1;min-width:120px">
+      <option value="">— pick —</option>
+      <optgroup label="Back 4">
+        <option value="442">4-4-2</option>
+        <option value="433">4-3-3</option>
+        <option value="4231">4-2-3-1</option>
+        <option value="4141">4-1-4-1</option>
+      </optgroup>
+      <optgroup label="Back 3">
+        <option value="343">3-4-3</option>
+        <option value="352">3-5-2</option>
+        <option value="3412">3-4-1-2</option>
+      </optgroup>
+      <optgroup label="Back 5">
+        <option value="532">5-3-2</option>
+        <option value="541">5-4-1</option>
+      </optgroup>
+    </select>
+    <button onclick="resetSPPlayers()" style="font-size:0.6rem;padding:4px 8px;color:#888;border-color:#333">Reset</button>
+  </div>
+
+  <!-- Scenario tabs -->
+
+  <div class="sub-tabs" id="sp-tabs">
+    <div style="width:100%;display:flex;gap:4px;margin-bottom:4px">
+      <div class="stab active" id="side-right-btn" onclick="setSide('R')" style="flex:1;text-align:center">➡️ Right Side</div>
+      <div class="stab" id="side-left-btn" onclick="setSide('L')" style="flex:1;text-align:center">⬅️ Left Side</div>
+    </div>
+    <div id="sp-scenario-tabs" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+  </div>
+
+  <!-- FM Mobile-style split layout: pitch left, instructions right -->
+
+  <div style="display:flex;gap:8px;align-items:flex-start">
+
+```
+<!-- LEFT: Pitch -->
+<div style="flex:0 0 auto;width:48%">
+  <div class="sp-pitch" id="sp-pitch">
+    <div class="goal-line"></div>
+    <div class="six-yard-box"></div>
+    <div class="pen-area"></div>
+    <div class="pen-spot"></div>
+    <div class="sp-grid" id="sp-grid"></div>
+    <svg class="sp-arrows" id="sp-arrows" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L6,3 z" fill="rgba(255,255,255,0.5)"/>
+        </marker>
+      </defs>
+    </svg>
+    <div class="sp-ball" id="sp-ball"></div>
+  </div>
+  <!-- Distribution selector under pitch -->
+  <div style="margin-top:6px">
+    <div style="font-size:0.52rem;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Distribution</div>
+    <div class="dist-grid" id="dist-grid"></div>
+  </div>
+  <!-- In/out swinger toggle — corners and wide FKs only -->
+  <div id="swing-toggle" style="margin-top:5px;display:none">
+    <div style="font-size:0.52rem;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Delivery</div>
+    <div style="display:flex;gap:3px">
+      <div class="dist-btn active" id="swing-in"  onclick="setSwing('in')"  style="flex:1">↩ In-swinger</div>
+      <div class="dist-btn"        id="swing-out" onclick="setSwing('out')" style="flex:1">↪ Out-swinger</div>
+    </div>
+  </div>
+  <!-- Landing zone legend -->
+  <div id="dist-legend" style="margin-top:5px;font-size:0.52rem;color:#777;min-height:14px;text-align:center;font-style:italic"></div>
+</div>
+
+<!-- RIGHT: Player instruction list -->
+<div style="flex:1;min-width:0">
+  <div style="font-size:0.52rem;color:#555;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Instructions</div>
+  <div id="sp-player-list"></div>
+</div>
+```
+
+  </div>
+
+  <!-- Scoring chance analyser -->
+
+  <div id="sp-analyser" style="margin-top:8px"></div>
+
+  <!-- Tips panel -->
+
+  <div class="sp-analysis" id="sp-analysis" style="margin-top:6px"></div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// MAIN TAB SWITCHING
+// ═══════════════════════════════════════════════════════════════
+function switchMain(tab) {
+  document.querySelectorAll('.mtab').forEach((t,i) =>
+    t.classList.toggle('active', (i===0&&tab==='sp')||(i===1&&tab==='ce')));
+  document.getElementById('panel-sp').classList.toggle('active', tab==='sp');
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SET PIECE DESIGNER — FM Mobile accurate
+// ═══════════════════════════════════════════════════════════════
+
+// FM Mobile's exact instruction codes
+const INSTR_CODES = {
+  'DW':  { label:'Disrupt Wall',                  color:'#ff44aa' },
+  'SWT': { label:'Stand With Taker',              color:'#44aaff' },
+  'NSI': { label:'No Specific Instructions',      color:'#666666' },
+  'SBI': { label:'Stay Back If Needed',            color:'#888888' },
+  'SB':  { label:'Stay Back',                      color:'#555555' },
+  'GF':  { label:'Go Forward',                     color:'#ff6600' },
+  'NP':  { label:'Attack Near Post',               color:'#cc44ff' },
+  'FP':  { label:'Attack Far Post',                color:'#33aaff' },
+  // PS removed — Penalty Spot is a Distribution, not an instruction
+  'EA':  { label:'Attack Ball from Edge of Area',  color:'#00dd77' },
+  'LO':  { label:'Lurk Outside Area',              color:'#ff9944' },
+  'MK':  { label:'Mark Keeper',                    color:'#ff3333' },
+  'CS':  { label:'Come Short',                     color:'#44ddcc' },
+  'FW':  { label:'Form Wall',                      color:'#5577cc' },
+  'MNP': { label:'Mark Near Post',                 color:'#4499aa' },
+  'MFP': { label:'Mark Far Post',                  color:'#448844' },
+  'MM':  { label:'Man Mark',                       color:'#aa8844' },
+  'ZN':  { label:'Zonal Mark',                     color:'#448866' },
+  'CDT': { label:'Close Down Taker',               color:'#774444' },
+  'SFC': { label:'Stay Fwd (Counter)',              color:'#554477' },
+};
+
+// Distribution options per scenario
+const DIST_OPTIONS = {
+  'att-corner':       ['Short','Near Post','Far Post','Edge of Area','Penalty Spot'],
+  'def-corner':       [],
+  'att-fk-right':     ['Short','Cross Near','Cross Centre','Cross Far','Best Header'],
+  'att-fk-cr':        ['Shoot','Short','Wide Left','Wide Right','Best Header'],
+  'att-fk-deep-r':    ['Short','Long','Cross Near','Cross Centre','Cross Far','Best Header'],
+  'att-fk-deep-cr':   ['Short','Long','Wide Left','Wide Right','Best Header'],
+  'def-fk':           [],
+};
+
+// Full instruction sets per zone type
+const FK_INSTR_WIDE   = ['NSI','SBI','SB','GF','MK','DW','SWT']; // FK Right, FK Deep Right
+const FK_INSTR_SHOOT  = ['NSI','SBI','SB','GF','MK','DW','SWT']; // FK Centre-Right
+const FK_INSTR_DEEP   = ['NSI','SBI','SB','GF'];                  // FK Deep Right, FK Deep Centre-Right
+
+// Default player setups — positions and default instructions
+// x/y as % of pitch (attack = top, goal line at top)
+const SCENARIOS = {
+  'att-corner': {
+    label:'Corner — Attack',
+    ballPos:{x:3, y:3},
+    corner:'L',
+    distribution:'Near Post',
+    players:[
+      {id:1, pos:'AMR', x:3,  y:3,  instr:'SBI', name:'Taker',   isTaker:true},
+      {id:2, pos:'DR',  x:32, y:8,  instr:'NP',  name:'Player 2'},
+      {id:3, pos:'DL',  x:50, y:8,  instr:'MK',  name:'Player 3'},
+      {id:4, pos:'DC',  x:35, y:20, instr:'NP',  name:'Player 4'},
+      {id:5, pos:'DC',  x:62, y:20, instr:'GF',  name:'Player 5'},
+      {id:6, pos:'DMC', x:50, y:35, instr:'GF',  name:'Player 6'},
+      {id:7, pos:'MC',  x:28, y:55, instr:'SBI', name:'Player 7'},
+      {id:8, pos:'MC',  x:65, y:55, instr:'SBI', name:'Player 8'},
+      {id:9, pos:'AMR', x:70, y:8,  instr:'NP',  name:'Player 9'},
+    ],
+    availableInstr:['NSI','SBI','SB','GF','NP','FP','EA','LO','MK','CS'],
+    tips:[
+      'Near Post (NP) runner creates a decoy — occupies the near post defender',
+      'Mark Keeper (MK) disrupts the GK — use your tallest/most physical player',
+      'Penalty Spot (PS) attacker needs Heading 13+, Jumping 13+',
+      'Go Forward (GF) players time late runs into the box',
+      'Lurk Outside Area (LO) = edge of box — picks up clearances for a shot',
+      'Come Short (CS) = short corner option — use if tightly marked in the box',
+      'Always leave 1-2 on Stay Back If Needed (SBI) for the counter',
+    ]
+  },
+  'def-corner': {
+    label:'Corner — Defend',
+    ballPos:{x:3, y:92},
+    corner:'L',
+    distribution:null,
+    players:[
+      {id:1, pos:'GK',  x:50, y:4,  instr:'GF',  name:'GK'},
+      {id:2, pos:'DR',  x:28, y:4,  instr:'MNP', name:'Near Post'},
+      {id:3, pos:'DL',  x:72, y:4,  instr:'MFP', name:'Far Post'},
+      {id:4, pos:'DC',  x:38, y:18, instr:'ZN',  name:'Zonal 1'},
+      {id:5, pos:'DC',  x:54, y:18, instr:'ZN',  name:'Zonal 2'},
+      {id:6, pos:'DC',  x:42, y:30, instr:'MM',  name:'Man Mk 1'},
+      {id:7, pos:'DC',  x:60, y:30, instr:'MM',  name:'Man Mk 2'},
+      {id:8, pos:'DMC', x:24, y:48, instr:'EA',  name:'Edge Patrol'},
+      {id:9, pos:'MC',  x:55, y:68, instr:'SFC', name:'Counter'},
+      {id:10,pos:'MC',  x:10, y:80, instr:'CDT', name:'Close Down'},
+    ],
+    availableInstr:['MNP','MFP','ZN','MM','EA','SFC','CDT','SBI'],
+    tips:[
+      'Always have a player on both posts — GK cant cover everything',
+      'Hybrid approach: zonal in 6-yard box, man-mark at penalty spot',
+      'Zonal markers need Positioning 13+, Anticipation 13+',
+      'Man markers should match up with the tallest/best heading attackers',
+      'Edge of Area patrol stops recycled balls becoming dangerous',
+      'Leave 1 player forward — stops opponent keeping a CB back',
+    ]
+  },
+
+  // ── FK RIGHT (Attack) ─────────────────────────────────────────
+  // Wide right, level with penalty area. Cross-based. Arrow points into box.
+  'att-fk-right': {
+    label:'FK Right — Attack',
+    ballPos:{x:92, y:62},
+    corner:null,
+    distribution:'Cross Near',
+    players:[
+      {id:1, pos:'WBL', x:88, y:62, instr:'SBI', name:'Taker', isTaker:true},
+      {id:2, pos:'DC',  x:35, y:8,  instr:'SBI', name:'Player 2'},
+      {id:3, pos:'DC',  x:50, y:8,  instr:'SBI', name:'Player 3'},
+      {id:4, pos:'DC',  x:65, y:8,  instr:'SBI', name:'Player 4'},
+      {id:5, pos:'WBR', x:75, y:40, instr:'SBI', name:'Player 5'},
+      {id:6, pos:'WBL', x:25, y:55, instr:'SBI', name:'Player 6'},
+      {id:7, pos:'DMC', x:50, y:38, instr:'GF',  name:'Player 7'},
+      {id:8, pos:'DMC', x:55, y:60, instr:'DW',  name:'Player 8'},
+      {id:9, pos:'AMC', x:42, y:25, instr:'GF',  name:'Player 9'},
+    ],
+    availableInstr: FK_INSTR_WIDE,
+    tips:[
+      'Cross Near is most dangerous from this position — driven delivery into the six-yard box',
+      'Mark Keeper (MK) disrupts GK — use on Cross Near deliveries',
+      'Disrupt Wall (DW) not a wall here — player presses the defender in the box instead',
+      'Stand With Taker (SWT) creates a short option — delays the defence',
+      'From the right flank most deliveries arrive for headers — use your tallest player as target',
+      'Leave 3-4 on SBI — wide FK counter-attacks are fast and devastating',
+    ]
+  },
+
+  // ── FK CENTRE-RIGHT (Attack) ──────────────────────────────────
+  // Right of centre, 20-25 yards. Shooting range. Arrow points at goal.
+  'att-fk-cr': {
+    label:'FK Centre-Right — Attack',
+    ballPos:{x:65, y:68},
+    corner:null,
+    distribution:'Shoot',
+    players:[
+      {id:1, pos:'WBL', x:62, y:72, instr:'SBI', name:'Taker',  isTaker:true},
+      {id:2, pos:'DC',  x:28, y:10, instr:'SBI', name:'Player 2'},
+      {id:3, pos:'DC',  x:50, y:10, instr:'SBI', name:'Player 3'},
+      {id:4, pos:'WBR', x:72, y:10, instr:'SBI', name:'Player 4'},
+      {id:5, pos:'WBL', x:25, y:45, instr:'SBI', name:'Player 5'},
+      {id:6, pos:'DMC', x:45, y:32, instr:'GF',  name:'Player 6'},
+      {id:7, pos:'DMC', x:55, y:55, instr:'DW',  name:'Player 7'},
+      {id:8, pos:'AMC', x:38, y:22, instr:'SWT', name:'Player 8'},
+    ],
+    availableInstr: FK_INSTR_SHOOT,
+    tips:[
+      'Shoot is the primary option — taker needs Free Kicks 14+, Technique 14+, Curls Ball trait',
+      'Stand With Taker (SWT) creates a dummy run — the taker can play a 1-2 or the SWT player shoots',
+      'Disrupt Wall (DW) blocks a defender\'s view and makes it harder to defend',
+      'Go Forward (GF) players make late runs — if the shot is saved they attack the rebound',
+      'Mark Keeper (MK) disrupts GK positioning on indirect FKs',
+      'Leave 3 on SBI minimum — if the shot is blocked and cleared, counter is immediate',
+    ]
+  },
+
+  // ── FK DEEP RIGHT (Attack) ────────────────────────────────────
+  // Right flank, deep near halfway. Long ball or cross. Arrow points forward.
+  'att-fk-deep-r': {
+    label:'FK Deep Right — Attack',
+    ballPos:{x:88, y:42},
+    corner:null,
+    distribution:'Best Header',
+    players:[
+      {id:1, pos:'WBR', x:84, y:42, instr:'SBI', name:'Taker',  isTaker:true},
+      {id:2, pos:'DC',  x:28, y:12, instr:'SBI', name:'Player 2'},
+      {id:3, pos:'DC',  x:42, y:12, instr:'SBI', name:'Player 3'},
+      {id:4, pos:'DC',  x:55, y:12, instr:'SBI', name:'Player 4'},
+      {id:5, pos:'WBR', x:72, y:38, instr:'SBI', name:'Player 5'},
+      {id:6, pos:'WBL', x:22, y:52, instr:'SBI', name:'Player 6'},
+      {id:7, pos:'DMC', x:48, y:55, instr:'GF',  name:'Player 7'},
+      {id:8, pos:'AMC', x:38, y:35, instr:'GF',  name:'Player 8'},
+    ],
+    availableInstr: FK_INSTR_DEEP,
+    tips:[
+      'Very limited options from here — this is a territory/possession FK not a goal threat',
+      'Best Header sends a long diagonal ball to your aerial target in the box',
+      'Go Forward (GF) players should be your fastest players — they run onto the long ball',
+      'Short option keeps possession if no run is on — maintain shape',
+      'Leave most players on SBI — you\'re deep, transition risk is high',
+      'Cross deliveries aim for the far post — long diagonal into the penalty area',
+    ]
+  },
+
+  // ── FK DEEP CENTRE-RIGHT (Attack) ─────────────────────────────
+  // Right of centre, deep near halfway. Long ball only. Arrow points forward.
+  'att-fk-deep-cr': {
+    label:'FK Deep Centre-Right — Attack',
+    ballPos:{x:62, y:42},
+    corner:null,
+    distribution:'Wide Right',
+    players:[
+      {id:1, pos:'DMC', x:58, y:46, instr:'SBI', name:'Taker',  isTaker:true},
+      {id:2, pos:'DC',  x:25, y:12, instr:'SBI', name:'Player 2'},
+      {id:3, pos:'DC',  x:38, y:12, instr:'SBI', name:'Player 3'},
+      {id:4, pos:'DC',  x:52, y:12, instr:'SBI', name:'Player 4'},
+      {id:5, pos:'WBR', x:72, y:35, instr:'SBI', name:'Player 5'},
+      {id:6, pos:'WBL', x:20, y:52, instr:'SBI', name:'Player 6'},
+      {id:7, pos:'DMC', x:45, y:48, instr:'GF',  name:'Player 7'},
+      {id:8, pos:'AMC', x:35, y:32, instr:'GF',  name:'Player 8'},
+    ],
+    availableInstr: FK_INSTR_DEEP,
+    tips:[
+      'Fewest options of any FK zone — you are too deep and central to threaten directly',
+      'Wide Right plays the ball wide to your WBR who then delivers from a better position',
+      'Long ball to your target forward — needs Heading 14+, Strength 13+ to hold it up',
+      'Short option sets up a second pass into a better FK position',
+      'Go Forward runners make diagonal runs to receive the long ball in behind',
+      'Most players on SBI — a misplaced long ball here means a fast counter against you',
+    ]
+  },
+
+  // ── FK DEFEND ─────────────────────────────────────────────────
+  'def-fk': {
+    label:'FK — Defend',
+    ballPos:{x:42, y:62},
+    corner:null,
+    distribution:null,
+    players:[
+      {id:1, pos:'GK',  x:50, y:4,  instr:'GF',  name:'GK'},
+      {id:2, pos:'DC',  x:46, y:58, instr:'FW',  name:'Wall 1'},
+      {id:3, pos:'DC',  x:50, y:57, instr:'FW',  name:'Wall 2'},
+      {id:4, pos:'DC',  x:42, y:58, instr:'FW',  name:'Wall 3'},
+      {id:5, pos:'DC',  x:54, y:57, instr:'FW',  name:'Wall 4'},
+      {id:6, pos:'DR',  x:28, y:4,  instr:'MNP', name:'Near Post'},
+      {id:7, pos:'DL',  x:73, y:4,  instr:'MFP', name:'Far Post'},
+      {id:8, pos:'DMC', x:38, y:28, instr:'MM',  name:'Man Mk 1'},
+      {id:9, pos:'MC',  x:62, y:28, instr:'MM',  name:'Man Mk 2'},
+      {id:10,pos:'MC',  x:55, y:78, instr:'SFC', name:'Counter'},
+    ],
+    availableInstr:['FW','MNP','MFP','MM','ZN','EA','SFC','SBI','CDT'],
+    tips:[
+      '4-man wall standard — wall players need Bravery 12+, Jumping 12+',
+      'GK stands slightly toward near post — wall covers the far side',
+      'Always cover both posts with dedicated players',
+      'Man-mark the opponent best FK target — usually tallest + best heading',
+      'For wide FKs: 2-3 in wall, more players marking in the box',
+      'Leave 1 player forward — makes opponent keep a CB back too',
+    ]
+  },
+};
+
+// ── AUTO-GENERATE LEFT MIRRORS ────────────────────────────────
+// Mirror all right-side scenarios to left by flipping x and swapping L/R labels
+const mirrorScenario = (s, newLabel, newKey) => ({
+  ...s,
+  label: newLabel,
+  ballPos: { x: 100 - s.ballPos.x, y: s.ballPos.y },
+  corner: s.corner === 'L' ? 'R' : s.corner === 'R' ? 'L' : null,
+  players: s.players.map(p => ({
+    ...p,
+    x: 100 - p.x,
+    pos: p.pos.replace('WBR','WBL_').replace('WBL','WBR').replace('WBL_','WBL')
+              .replace('DR','DL_').replace('DL','DR').replace('DL_','DL')
+              .replace('AMR','AML_').replace('AML','AMR').replace('AML_','AML'),
+  })),
+});
+
+SCENARIOS['att-corner-l']    = mirrorScenario(SCENARIOS['att-corner'],    'Corner Left — Attack',          'att-corner-l');
+SCENARIOS['att-fk-left']     = mirrorScenario(SCENARIOS['att-fk-right'],  'FK Left — Attack',              'att-fk-left');
+SCENARIOS['att-fk-cl']       = mirrorScenario(SCENARIOS['att-fk-cr'],     'FK Centre-Left — Attack',       'att-fk-cl');
+SCENARIOS['att-fk-deep-l']   = mirrorScenario(SCENARIOS['att-fk-deep-r'], 'FK Deep Left — Attack',         'att-fk-deep-l');
+SCENARIOS['att-fk-deep-cl']  = mirrorScenario(SCENARIOS['att-fk-deep-cr'],'FK Deep Centre-Left — Attack',  'att-fk-deep-cl');
+
+// Also add DIST_OPTIONS for mirrored scenarios
+DIST_OPTIONS['att-corner-l']   = DIST_OPTIONS['att-corner'];
+DIST_OPTIONS['att-fk-left']    = DIST_OPTIONS['att-fk-right'];
+DIST_OPTIONS['att-fk-cl']      = DIST_OPTIONS['att-fk-cr'];
+DIST_OPTIONS['att-fk-deep-l']  = DIST_OPTIONS['att-fk-deep-r'];
+DIST_OPTIONS['att-fk-deep-cl'] = DIST_OPTIONS['att-fk-deep-cr'];
+
+let currentSPScenario = 'att-corner';
+let currentSwing = 'in'; // 'in' or 'out'
+
+// Whether a scenario uses swing toggle
+const USES_SWING = new Set(['att-corner','att-corner-l','att-fk-right','att-fk-left','att-fk-cr','att-fk-cl']);
+
+// Distribution landing zones — where the ball physically arrives on the pitch
+// Coordinates as % of pitch (attack=top)
+// Returns { x, y, label, color, radius } for the target highlight circle
+const DIST_LANDING = {
+  'Near Post':     { x:22, y:4,  label:'Near post — 6-yard box edge',    color:'rgba(255,100,100,0.6)',  r:8  },
+  'Far Post':      { x:78, y:4,  label:'Far post — back of 6-yard box',  color:'rgba(100,150,255,0.6)', r:8  },
+  'Cross Near':    { x:22, y:4,  label:'Driven near post cross',          color:'rgba(255,100,100,0.6)',  r:7  },
+  'Cross Centre':  { x:50, y:12, label:'Central delivery — penalty spot', color:'rgba(255,200,0,0.6)',   r:9  },
+  'Cross Far':     { x:78, y:6,  label:'Far post delivery',               color:'rgba(100,150,255,0.6)', r:8  },
+  'Best Header':   { x:50, y:8,  label:'Floated to best aerial player',   color:'rgba(200,100,255,0.6)', r:10 },
+  'Penalty Spot':  { x:50, y:25, label:'Delivery to penalty spot',        color:'rgba(255,200,0,0.6)',   r:9  },
+  'Edge of Area':  { x:50, y:42, label:'Ball to edge of box',             color:'rgba(0,220,100,0.6)',   r:9  },
+  'Short':         { x:12, y:18, label:'Short pass — keep possession',    color:'rgba(200,200,200,0.5)', r:7  },
+  'Shoot':         { x:50, y:2,  label:'Direct shot at goal',             color:'rgba(255,80,80,0.7)',   r:6  },
+  'Long':          { x:50, y:10, label:'Long diagonal into box',          color:'rgba(200,100,255,0.5)', r:11 },
+  'Wide Left':     { x:8,  y:25, label:'Switch to left channel',          color:'rgba(100,220,100,0.5)', r:8  },
+  'Wide Right':    { x:92, y:25, label:'Switch to right channel',         color:'rgba(100,220,100,0.5)', r:8  },
+};
+
+// Swing effect on landing zone
+// In-swinger from right = ball curves LEFT (toward near post on right corner)
+// Out-swinger from right = ball curves RIGHT (toward far post)
+function getSwingLanding(dist, scenario, swing) {
+  const base = DIST_LANDING[dist];
+  if(!base) return null;
+  if(!USES_SWING.has(scenario)) return base;
+  const isLeft = scenario.includes('-l') || scenario.includes('-left') || scenario.includes('-cl');
+  // For corners/wide FKs adjust near/far post based on swing
+  if(dist === 'Near Post' || dist === 'Cross Near') {
+    // In-swinger from right lands near post (left side of goal)
+    // Out-swinger from right swings away — lands more central/far
+    if(!isLeft) return swing==='in'
+      ? {...base, x:22, label:'In-swinger → near post ⚡ most dangerous'}
+      : {...base, x:50, y:8, color:'rgba(255,200,0,0.6)', label:'Out-swinger → drifts central'};
+    else return swing==='in'
+      ? {...base, x:78, label:'In-swinger → near post ⚡'}
+      : {...base, x:50, y:8, color:'rgba(255,200,0,0.6)', label:'Out-swinger → drifts central'};
+  }
+  if(dist === 'Far Post' || dist === 'Cross Far') {
+    if(!isLeft) return swing==='out'
+      ? {...base, x:78, label:'Out-swinger → far post ⚡'}
+      : {...base, x:50, y:8, color:'rgba(255,200,0,0.6)', label:'In-swinger → drifts away from far post'};
+    else return swing==='out'
+      ? {...base, x:22, label:'Out-swinger → far post ⚡'}
+      : {...base, x:50, y:8, color:'rgba(255,200,0,0.6)', label:'In-swinger → drifts away'};
+  }
+  return base;
+}
+
+function setSwing(sw) {
+  currentSwing = sw;
+  document.getElementById('swing-in').classList.toggle('active', sw==='in');
+  document.getElementById('swing-out').classList.toggle('active', sw==='out');
+  renderDistributionLanding();
+  renderAnalyser();
+}
+
+// ── Scoring chance analyser ───────────────────────────────────
+// Base xG-style score for each distribution
+// ── Position type aerial/physical rating ─────────────────────
+const POS_TYPE = {
+  HIGH: new Set(['DC','CB','BPD','NCB','WBC','GK']),     // CBs, physical defenders
+  MED:  new Set(['ST','AF','CF','TF','SS','DMC','MC','BBM','DM','DMR','DML']), // strikers, physical mids
+  LOW:  new Set(['AML','AMR','AMC','WBL','WBR','ML','MR','MR','DL','DR','WML','WMR','FC']), // wide/attacking players
+};
+function getPosType(pos) {
+  const p = pos.toUpperCase();
+  if(POS_TYPE.HIGH.has(p)) return 'HIGH';
+  if(POS_TYPE.MED.has(p))  return 'MED';
+  return 'LOW';
+}
+
+// Per instruction xG multiplier by position type
+// HIGH=CB/defender, MED=striker/central mid, LOW=winger/fullback
+const INSTR_POS_XG = {
+  'NP': { HIGH:1.0,  MED:0.65, LOW:0.35 }, // CBs dominate near post delivery
+  'FP': { HIGH:0.90, MED:0.70, LOW:0.50 }, // CBs good FP, attackers can time runs
+  'GF': { HIGH:0.60, MED:0.85, LOW:0.55 }, // Strikers/physical mids best for late runs
+  'MK': { HIGH:0.40, MED:0.75, LOW:0.60 }, // Physical mids best MK — CBs wasted here
+  'LO': { HIGH:0.30, MED:0.55, LOW:0.65 }, // Wide/attacking players better LO — CBs wasteful
+  'EA': { HIGH:0.25, MED:0.50, LOW:0.60 }, // Similar to LO
+  'CS': { HIGH:0.20, MED:0.45, LOW:0.70 }, // Technical players for short corner
+  'SBI':{ HIGH:0.50, MED:0.50, LOW:0.50 }, // Position doesn't affect holding value
+  'SB': { HIGH:0.50, MED:0.50, LOW:0.50 },
+  'NSI':{ HIGH:0.30, MED:0.30, LOW:0.30 },
+};
+
+const DIST_BASE_SCORE = {
+  'Near Post':0.72, 'Cross Near':0.68, 'Cross Centre':0.55, 'Cross Far':0.58,
+  'Best Header':0.60, 'Penalty Spot':0.65, 'Shoot':0.45,
+  'Edge of Area':0.30, 'Short':0.20, 'Long':0.35, 'Wide Left':0.18, 'Wide Right':0.18,
+};
+
+// Which instructions actually serve each distribution well
+// dist → { good: [instrs that synergise], bad: [instrs that waste potential] }
+const DIST_SYNERGY = {
+  'Near Post':    { good:['NP','MK'],       bad:['FP','LO','EA'],   key:'NP' },
+  'Cross Near':   { good:['NP','MK'],       bad:['FP','LO'],        key:'NP' },
+  'Far Post':     { good:['FP','GF'],       bad:['NP','CS'],        key:'FP' },
+  'Cross Far':    { good:['FP','GF'],       bad:['NP','CS'],        key:'FP' },
+  'Cross Centre': { good:['GF','NP'],  bad:['CS'],             key:'GF' },
+  'Best Header':  { good:['GF','FP'],  bad:['CS'],             key:'GF' },
+  'Penalty Spot': { good:['GF','MK'],       bad:['CS','LO'],        key:'PS' },
+  'Shoot':        { good:['GF','MK','DW'],  bad:['NP','FP','CS'],   key:'GF' },
+  'Edge of Area': { good:['EA','LO','GF'],  bad:['NP','FP'],        key:'EA' },
+  'Short':        { good:['CS','SWT'],      bad:['NP','FP'],   key:'CS' },
+  'Long':         { good:['GF','FP'],       bad:['NP','CS'],        key:'GF' },
+  'Wide Left':    { good:['GF'],            bad:['NP','FP','CS'],   key:'GF' },
+  'Wide Right':   { good:['GF'],            bad:['NP','FP','CS'],   key:'GF' },
+};
+
+function runSPAnalyser() {
+  const s = SCENARIOS[currentSPScenario];
+  const state = getSPState();
+  if(currentSPScenario.startsWith('def-')) return null;
+
+  const dist = state.distribution;
+  if(!dist) return null;
+  const baseScore = DIST_BASE_SCORE[dist] || 0.3;
+  const synergy = DIST_SYNERGY[dist] || { good:[], bad:[], key:'' };
+
+  const players = s.players.filter(p => !p.isTaker && p.pos !== 'GK');
+  const instrs = players.map(p => state.instrs[p.id] || p.instr);
+
+  // Position-weighted xG contribution per player
+  // A DC on NP is worth much more than an AML on NP
+  const playerXG = players.map(p => {
+    const instr = state.instrs[p.id] || p.instr;
+    const posT = getPosType(p.pos);
+    const multiplier = INSTR_POS_XG[instr]?.[posT] ?? 0.5;
+    return { pos:p.pos, instr, posType:posT, multiplier };
+  });
+
+  // Wasted CB count — CBs who are on LO/EA/CS/MK when they should be NP/FP
+  const wastedCBs = playerXG.filter(p =>
+    p.posType==='HIGH' && ['LO','EA','CS','MK','NSI'].includes(p.instr)
+  ).length;
+  // Mismatched roles — wide/attacking players on aerial instructions
+  const mismatchedAerial = playerXG.filter(p =>
+    p.posType==='LOW' && ['NP','FP'].includes(p.instr)
+  ).length;
+
+  const attackInstrs = ['NP','FP','EA','LO','GF','MK','CS','SWT','DW'];
+  const holdInstrs   = ['SBI','SB','NSI'];
+  const attackers = instrs.filter(i => attackInstrs.includes(i)).length;
+  const holders   = instrs.filter(i => holdInstrs.includes(i)).length;
+  const npCount  = instrs.filter(i=>i==='NP').length;
+  const fpCount  = instrs.filter(i=>i==='FP').length;
+  const mkCount  = instrs.filter(i=>i==='MK').length;
+  const loCount  = instrs.filter(i=>i==='LO').length;
+  const csCount  = instrs.filter(i=>i==='CS').length;
+  const gfCount  = instrs.filter(i=>i==='GF').length;
+
+  // Average position-weighted xG for attacking players
+  const attackingPlayers = playerXG.filter(p => attackInstrs.includes(p.instr));
+  const avgPosXG = attackingPlayers.length
+    ? attackingPlayers.reduce((s,p) => s+p.multiplier, 0) / attackingPlayers.length
+    : 0;
+  // posQualityMod: how well the positions match the instructions (-0.15 to +0.15)
+  const posQualityMod = (avgPosXG - 0.6) * 0.5; // 0.6 = baseline average quality
+
+  const npDist = dist==='Near Post'||dist==='Cross Near';
+  const fpDist = dist==='Far Post'||dist==='Cross Far';
+  const centralDist = dist==='Cross Centre'||dist==='Penalty Spot'||dist==='Best Header';
+
+  // SWING — delivery modifier with hard cap on mismatch, conditional bonus on match
+  let swingMod = 0;
+  let swingCap = 1.0;
+  const swingApplies = USES_SWING.has(currentSPScenario);
+  if(swingApplies) {
+    if(npDist) {
+      if(currentSwing==='in')  { swingMod = npCount>0 ? +0.14 : 0; }
+      else                     { swingMod = -0.15; swingCap = 0.68; }
+    }
+    if(fpDist) {
+      if(currentSwing==='out') { swingMod = fpCount>0 ? +0.12 : 0; }
+      else                     { swingMod = -0.13; swingCap = 0.65; }
+    }
+    if(dist==='Shoot') swingMod = currentSwing==='in' ? +0.09 : -0.05;
+  }
+
+  const goodCount = instrs.filter(i => synergy.good.includes(i)).length;
+  const badCount  = instrs.filter(i => synergy.bad.includes(i)).length;
+  let instrScore = goodCount*0.06 - badCount*0.07;
+
+  let covBonus = 0;
+  if(npDist) { if(npCount>0) covBonus+=0.10; else covBonus-=0.22; }
+  if(fpDist) { if(fpCount>0) covBonus+=0.09; else covBonus-=0.18; }
+  if(centralDist && psCount>0) covBonus+=0.08;
+  if(mkCount>0) covBonus+=0.05;
+  if(loCount>0 && npDist)  covBonus-=0.06;
+  if(loCount>0 && !npDist) covBonus+=0.03;
+
+  let atkMod = 0;
+  if(attackers===0)       atkMod=-0.28;
+  else if(attackers===1)  atkMod=-0.14;
+  else if(attackers===2)  atkMod=+0.04;
+  else if(attackers===3)  atkMod=+0.10;
+  else if(attackers===4)  atkMod=+0.08;
+  else if(attackers===5)  atkMod=+0.03;
+  else                    atkMod=-0.06;
+
+  const raw = Math.min(swingCap, Math.min(0.95, Math.max(0.04,
+    baseScore + swingMod + instrScore + covBonus + atkMod + posQualityMod
+    - (wastedCBs * 0.05)      // each wasted CB costs 5 points
+    - (mismatchedAerial * 0.04) // each LOW pos on aerial instr costs 4 points
+  )));
+  const scoringPct = Math.round(raw*100);
+
+  const distCounterRisk = {
+    'Near Post':0.55,'Cross Near':0.52,'Far Post':0.48,'Cross Far':0.48,
+    'Cross Centre':0.45,'Best Header':0.42,'Penalty Spot':0.50,
+    'Shoot':0.38,'Edge of Area':0.35,'Short':0.20,'Long':0.40,
+    'Wide Left':0.35,'Wide Right':0.35,
+  };
+  let counterBase = distCounterRisk[dist]||0.35;
+  counterBase += (attackers-3)*0.04;
+  counterBase -= holders*0.08;
+  const counterPct = Math.round(Math.min(0.92,Math.max(0.04,counterBase))*100);
+
+  const goods=[],bads=[],tips=[];
+  if(swingApplies) {
+    if(npDist && currentSwing==='in' && npCount>0)
+      goods.push('In-swinger to near post — highest danger combination ⚡');
+    else if(npDist && currentSwing==='in' && npCount===0)
+      bads.push('In-swinger delivery but no Near Post runners — ball arrives unchallenged');
+    else if(npDist && currentSwing==='out')
+      bads.push('Out-swinger to near post — ball curves away (max ~68%)');
+    else if(fpDist && currentSwing==='out' && fpCount>0)
+      goods.push('Out-swinger to far post — solid combination ✅');
+    else if(fpDist && currentSwing==='out' && fpCount===0)
+      bads.push('Out-swinger to far post but no FP runners');
+    else if(fpDist && currentSwing==='in')
+      bads.push('In-swinger to far post — ball curves away (max ~65%)');
+  }
+  if(npDist) {
+    if(npCount>0) goods.push(npCount+' Near Post runner'+(npCount>1?'s':'')+' — matches delivery ✅');
+    else bads.push('No Near Post runner — delivery lands unchallenged');
+    if(loCount>0) bads.push('LO wastes a slot on Near Post delivery — use NP or MK instead');
+  }
+  if(fpDist) {
+    if(fpCount>0) goods.push(fpCount+' Far Post runner'+(fpCount>1?'s':'')+' ✅');
+    else bads.push('No Far Post runner — nobody in the delivery zone');
+  }
+  if(centralDist) {
+    if(psCount>0) goods.push('Penalty spot covered ✅');
+    else bads.push('Penalty spot empty on central delivery');
+  }
+  if(mkCount>0) goods.push('Keeper marked — disrupts GK claim');
+  if(attackers>=3) goods.push(attackers+' attackers in the box');
+  else if(attackers===2) tips.push('2 attackers — add one more for more threat');
+  else bads.push('Only '+attackers+' attacker'+(attackers===1?'':'s')+' — defence comfortable');
+  if(holders>=3) goods.push(holders+' staying back — well protected');
+  else if(holders===2) tips.push('2 staying back — minimum safe coverage');
+  else if(holders===1) bads.push('Only 1 back — exposed to counter');
+  else bads.push('Nobody staying back — fast break risk');
+  if(goodCount===0&&badCount>0) bads.push(badCount+' player'+(badCount>1?'s are':' is')+' running to the wrong zone for this delivery');
+  if(csCount>0&&dist!=='Short') tips.push('Short option present — adds unpredictability');
+
+  // Position quality feedback
+  if(wastedCBs > 0) bads.push(wastedCBs+' CB'+(wastedCBs>1?'s are':' is')+' on non-aerial instructions — move them to NP or FP to use their height');
+  if(mismatchedAerial > 0) bads.push(mismatchedAerial+' wide/attacking player'+(mismatchedAerial>1?'s':'')+ ' on NP/FP — they rarely win aerial duels; use a DC or physical ST instead');
+  if(avgPosXG >= 0.75) goods.push('Good position-instruction match — right player types in the right roles');
+  else if(avgPosXG < 0.5 && attackingPlayers.length > 0) bads.push('Poor position match — the wrong player types are on key instructions');
+
+  return { scoringPct, counterPct, goods, bads, tips, attackers, holders };
+}
+function renderAnalyser() {
+  const el = document.getElementById('sp-analyser');
+  if(!el) return;
+  const result = runSPAnalyser();
+  if(!result) { el.innerHTML=''; return; }
+
+  const { scoringPct, counterPct, goods, bads, tips } = result;
+  const sColor = scoringPct>=65?'#55cc77':scoringPct>=45?'#e8c84a':'#ff6b6b';
+  const sLabel = scoringPct>=65?'Good chance':scoringPct>=45?'Moderate':'Low chance';
+  const cColor = counterPct>=60?'#ff6b6b':counterPct>=35?'#e8c84a':'#55cc77';
+  const cLabel = counterPct>=60?'High risk':counterPct>=35?'Moderate risk':'Low risk';
+
+  el.innerHTML = `
+    <div class="sp-analysis" style="border:1px solid ${sColor}44;margin-bottom:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div class="title" style="color:${sColor};margin:0">⚡ Scoring Chance — ${sLabel}</div>
+        <span style="font-size:0.85rem;font-weight:900;color:${sColor}">${scoringPct}%</span>
+      </div>
+      <div style="height:5px;background:#1a1a1a;border-radius:3px;margin-bottom:8px">
+        <div style="height:100%;width:${scoringPct}%;background:${sColor};border-radius:3px;transition:width 0.4s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <div class="title" style="color:${cColor};margin:0">🏃 Counter Risk — ${cLabel}</div>
+        <span style="font-size:0.85rem;font-weight:900;color:${cColor}">${counterPct}%</span>
+      </div>
+      <div style="height:5px;background:#1a1a1a;border-radius:3px;margin-bottom:8px">
+        <div style="height:100%;width:${counterPct}%;background:${cColor};border-radius:3px;transition:width 0.4s"></div>
+      </div>
+      ${goods.length?`<div style="color:#55cc77;font-size:0.58rem;line-height:1.7;margin-bottom:4px">${goods.map(g=>'✅ '+g).join('<br>')}</div>`:''}
+      ${bads.length?`<div style="color:#ff8855;font-size:0.58rem;line-height:1.7;margin-bottom:4px">${bads.map(b=>'⚠️ '+b).join('<br>')}</div>`:''}
+      ${tips.length?`<div style="color:#888;font-size:0.56rem;line-height:1.7">${tips.map(t=>'💡 '+t).join('<br>')}</div>`:''}
+    </div>`;
+}
+
+function renderDistributionLanding() {
+  const state = getSPState();
+  const dist = state.distribution;
+  const landing = getSwingLanding(dist, currentSPScenario, currentSwing);
+  const legend = document.getElementById('dist-legend');
+
+  // Remove old landing marker
+  const pitch = document.getElementById('sp-pitch');
+  pitch.querySelectorAll('.dist-marker').forEach(e=>e.remove());
+
+  if(!landing || !dist) { if(legend) legend.textContent=''; return; }
+
+  // Draw landing zone circle on pitch
+  const marker = document.createElement('div');
+  marker.className = 'dist-marker';
+  marker.style.cssText = `
+    position:absolute; left:${landing.x}%; top:${landing.y}%;
+    width:${(landing.r||8)*2}px; height:${(landing.r||8)*2}px;
+    border-radius:50%; background:${landing.color};
+    transform:translate(-50%,-50%);
+    border:2px solid rgba(255,255,255,0.4);
+    z-index:6; pointer-events:none;
+    animation:pulse 1.5s ease-in-out infinite;
+  `;
+  pitch.appendChild(marker);
+
+  if(legend) legend.textContent = landing.label || '';
+}
+
+
+// Formation presets — player positions on the set piece pitch
+// Pitch: attack = top (y~0%), defence = bottom (y~90%)
+// Each player: { pos, x, y, instr } — instr is the default for that position type
+const SP_FORMATIONS = {
+  '442': [
+    {pos:'GK',  x:50, y:88, instr:'SBI'},
+    {pos:'DR',  x:82, y:75, instr:'SBI'},
+    {pos:'DC',  x:62, y:78, instr:'SBI'},
+    {pos:'DC',  x:38, y:78, instr:'SBI'},
+    {pos:'DL',  x:18, y:75, instr:'SBI'},
+    {pos:'MR',  x:78, y:55, instr:'GF'},
+    {pos:'MC',  x:60, y:58, instr:'GF'},
+    {pos:'MC',  x:40, y:58, instr:'NP'},
+    {pos:'ML',  x:22, y:55, instr:'NP'},
+    {pos:'ST',  x:62, y:18, instr:'GF'},
+    {pos:'ST',  x:38, y:18, instr:'FP'},
+  ],
+  '433': [
+    {pos:'GK',  x:50, y:88, instr:'SBI'},
+    {pos:'DR',  x:80, y:75, instr:'SBI'},
+    {pos:'DC',  x:60, y:78, instr:'SBI'},
+    {pos:'DC',  x:40, y:78, instr:'SBI'},
+    {pos:'DL',  x:20, y:75, instr:'SBI'},
+    {pos:'MC',  x:65, y:55, instr:'GF'},
+    {pos:'DMC', x:50, y:60, instr:'SBI'},
+    {pos:'MC',  x:35, y:55, instr:'NP'},
+    {pos:'MR',  x:78, y:25, instr:'FP'},
+    {pos:'ST',  x:50, y:15, instr:'GF'},
+    {pos:'ML',  x:22, y:25, instr:'NP'},
+  ],
+  '4231': [
+    {pos:'GK',  x:50, y:88, instr:'SBI'},
+    {pos:'DR',  x:80, y:75, instr:'SBI'},
+    {pos:'DC',  x:60, y:78, instr:'SBI'},
+    {pos:'DC',  x:40, y:78, instr:'SBI'},
+    {pos:'DL',  x:20, y:75, instr:'SBI'},
+    {pos:'DMC', x:60, y:62, instr:'SBI'},
+    {pos:'DMC', x:40, y:62, instr:'SBI'},
+    {pos:'AMR', x:78, y:30, instr:'FP'},
+    {pos:'AMC', x:50, y:25, instr:'GF'},
+    {pos:'AML', x:22, y:30, instr:'NP'},
+    {pos:'ST',  x:50, y:12, instr:'GF'},
+  ],
+  '4141': [
+    {pos:'GK',  x:50, y:88, instr:'SBI'},
+    {pos:'DR',  x:80, y:75, instr:'SBI'},
+    {pos:'DC',  x:60, y:78, instr:'SBI'},
+    {pos:'DC',  x:40, y:78, instr:'SBI'},
+    {pos:'DL',  x:20, y:75, instr:'SBI'},
+    {pos:'DMC', x:50, y:65, instr:'SBI'},
+    {pos:'MR',  x:78, y:48, instr:'GF'},
+    {pos:'MC',  x:62, y:52, instr:'NP'},
+    {pos:'MC',  x:38, y:52, instr:'NP'},
+    {pos:'ML',  x:22, y:48, instr:'FP'},
+    {pos:'ST',  x:50, y:15, instr:'GF'},
+  ],
+  '343': [
+    {pos:'GK',  x:50, y:88, instr:'SBI'},
+    {pos:'DC',  x:65, y:78, instr:'SBI'},
+    {pos:'DC',  x:50, y:80, instr:'SBI'},
+    {pos:'DC',  x:35, y:78, instr:'SBI'},
+    {pos:'WBR', x:85, y:55, instr:'GF'},
+    {pos:'MC',  x:65, y:55, instr:'NP'},
+    {pos:'MC',  x:35, y:55, instr:'NP'},
+    {pos:'WBL', x:15, y:55, instr:'FP'},
+    {pos:'AMR', x:75, y:22, instr:'FP'},
+    {pos:'ST',  x:50, y:15, instr:'GF'},
+    {pos:'AML', x:25, y:22, instr:'NP'},
+  ],
+  '352': [
+    {pos:'GK',  x:50, y:88, instr:'SBI'},
+    {pos:'DC',  x:65, y:78, instr:'SBI'},
+    {pos:'DC',  x:50, y:80, instr:'SBI'},
+    {pos:'DC',  x:35, y:78, instr:'SBI'},
+    {pos:'WBR', x:85, y:52, instr:'GF'},
+    {pos:'MC',  x:65, y:58, instr:'NP'},
+    {pos:'DMC', x:50, y:62, instr:'SBI'},
+    {pos:'MC',  x:35, y:58, instr:'NP'},
+    {pos:'WBL', x:15, y:52, instr:'FP'},
+    {pos:'ST',  x:62, y:18, instr:'GF'},
+    {pos:'ST',  x:38, y:18, instr:'GF'},
+  ],
+  '3412': [
+    {pos:'GK',  x:50, y:88, instr:'SBI'},
+    {pos:'DC',  x:65, y:78, instr:'SBI'},
+    {pos:'DC',  x:50, y:80, instr:'SBI'},
+    {pos:'DC',  x:35, y:78, instr:'SBI'},
+    {pos:'WBR', x:85, y:52, instr:'GF'},
+    {pos:'MC',  x:62, y:58, instr:'NP'},
+    {pos:'MC',  x:38, y:58, instr:'NP'},
+    {pos:'WBL', x:15, y:52, instr:'FP'},
+    {pos:'AMC', x:50, y:30, instr:'GF'},
+    {pos:'ST',  x:62, y:15, instr:'GF'},
+    {pos:'ST',  x:38, y:15, instr:'MK'},
+  ],
+  '532': [
+    {pos:'GK',  x:50, y:88, instr:'SBI'},
+    {pos:'WBR', x:88, y:65, instr:'GF'},
+    {pos:'DC',  x:70, y:78, instr:'SBI'},
+    {pos:'DC',  x:50, y:80, instr:'SBI'},
+    {pos:'DC',  x:30, y:78, instr:'SBI'},
+    {pos:'WBL', x:12, y:65, instr:'FP'},
+    {pos:'MC',  x:65, y:58, instr:'NP'},
+    {pos:'DMC', x:50, y:62, instr:'SBI'},
+    {pos:'MC',  x:35, y:58, instr:'NP'},
+    {pos:'ST',  x:62, y:18, instr:'GF'},
+    {pos:'ST',  x:38, y:18, instr:'GF'},
+  ],
+  '541': [
+    {pos:'GK',  x:50, y:88, instr:'SBI'},
+    {pos:'WBR', x:88, y:65, instr:'GF'},
+    {pos:'DC',  x:70, y:78, instr:'SBI'},
+    {pos:'DC',  x:50, y:80, instr:'SBI'},
+    {pos:'DC',  x:30, y:78, instr:'SBI'},
+    {pos:'WBL', x:12, y:65, instr:'FP'},
+    {pos:'MR',  x:78, y:50, instr:'GF'},
+    {pos:'MC',  x:60, y:55, instr:'NP'},
+    {pos:'MC',  x:40, y:55, instr:'NP'},
+    {pos:'ML',  x:22, y:50, instr:'FP'},
+    {pos:'ST',  x:50, y:15, instr:'GF'},
+  ],
+};
+
+// Load a formation into the current scenario
+function loadSPFormation(formation) {
+  if(!formation) return;
+  const template = SP_FORMATIONS[formation];
+  if(!template) return;
+  const s = SCENARIOS[currentSPScenario];
+  const state = getSPState();
+  // Reassign players — keep taker in place, replace others
+  const taker = s.players.find(p=>p.isTaker);
+  s.players = [
+    ...(taker ? [taker] : []),
+    ...template.map((t,i) => ({
+      id: i+2, pos:t.pos, x:t.x, y:t.y,
+      instr: t.instr, name:t.pos,
+    }))
+  ];
+  // Reset instrs for new players
+  state.instrs = Object.fromEntries(s.players.map(p=>[p.id, p.instr]));
+  renderSP();
+}
+
+function resetSPPlayers() {
+  const s = SCENARIOS[currentSPScenario];
+  const orig = currentSPScenario.endsWith('-l')
+    ? SCENARIOS[currentSPScenario.replace(/-l$/,'')]
+    : null;
+  // Re-init state from original scenario defaults
+  spState[currentSPScenario] = null;
+  document.getElementById('sp-formation').value = '';
+  renderSP();
+}
+
+let spState = {}; // { scenario: { playerInstrs, distribution } }
+
+function getSPState() {
+  if(!spState[currentSPScenario]) {
+    const s = SCENARIOS[currentSPScenario];
+    spState[currentSPScenario] = {
+      distribution: s.distribution,
+      instrs: Object.fromEntries(s.players.map(p=>[p.id, p.instr])),
+    };
+  }
+  return spState[currentSPScenario];
+}
+
+let currentSide = 'R';
+
+const SCENARIO_TABS = {
+  R: [
+    { key:'att-corner',     label:'Corner' },
+    { key:'att-fk-right',   label:'FK Wide' },
+    { key:'att-fk-cr',      label:'FK Centre' },
+    { key:'att-fk-deep-r',  label:'FK Deep Wide' },
+    { key:'att-fk-deep-cr', label:'FK Deep Centre' },
+  ],
+  L: [
+    { key:'att-corner-l',   label:'Corner' },
+    { key:'att-fk-left',    label:'FK Wide' },
+    { key:'att-fk-cl',      label:'FK Centre' },
+    { key:'att-fk-deep-l',  label:'FK Deep Wide' },
+    { key:'att-fk-deep-cl', label:'FK Deep Centre' },
+  ],
+};
+
+function setSide(side) {
+  currentSide = side;
+  document.getElementById('side-right-btn').classList.toggle('active', side==='R');
+  document.getElementById('side-left-btn').classList.toggle('active', side==='L');
+  // Default to first scenario of this side
+  const first = SCENARIO_TABS[side][0].key;
+  renderScenarioTabs(first);
+  currentSPScenario = first;
+  renderSP();
+}
+
+function renderScenarioTabs(activeKey) {
+  const el = document.getElementById('sp-scenario-tabs');
+  el.innerHTML = SCENARIO_TABS[currentSide].map(t =>
+    `<div class="stab${t.key===activeKey?' active':''}" onclick="setSPScenario('${t.key}')">${t.label}</div>`
+  ).join('');
+}
+
+function setSPScenario(sc) {
+  currentSPScenario = sc;
+  renderScenarioTabs(sc);
+  renderSP();
+}
+
+function renderSP() {
+  const s = SCENARIOS[currentSPScenario];
+  const state = getSPState();
+  const pitch = document.getElementById('sp-pitch');
+
+  // Clear old players/flags/midline
+  pitch.querySelectorAll('.sp-player,.sp-corner,.sp-midline').forEach(e=>e.remove());
+
+  // Build 5x6 zone grid (once)
+  const grid = document.getElementById('sp-grid');
+  if(!grid.children.length) {
+    for(let r=0;r<6;r++) for(let c=0;c<5;c++) {
+      const z = document.createElement('div');
+      z.className = 'sp-zone';
+      z.dataset.row = r; z.dataset.col = c;
+      grid.appendChild(z);
+    }
+  }
+  // Clear highlights
+  grid.querySelectorAll('.sp-zone').forEach(z => z.className='sp-zone');
+
+  // Midfield line
+  const ml = document.createElement('div');
+  ml.className = 'sp-midline'; pitch.appendChild(ml);
+
+  // Ball
+  const ball = document.getElementById('sp-ball');
+  ball.style.left = s.ballPos.x + '%';
+  ball.style.top  = s.ballPos.y + '%';
+  ball.style.zIndex = '11';
+
+  // Corner flag — at top corner
+  if(s.corner) {
+    const f = document.createElement('div');
+    f.className = 'sp-corner';
+    f.textContent = '🚩';
+    f.style.left = s.corner==='L' ? '1%' : '93%';
+    f.style.top  = '1%';
+    f.style.zIndex = '11';
+    pitch.appendChild(f);
+  }
+
+  // Clear arrows
+  const svg = document.getElementById('sp-arrows');
+  while(svg && svg.children.length > 1) svg.removeChild(svg.lastChild);
+
+  // Helper: get zone from x/y% → row/col
+  const getZone = (x,y) => ({ col:Math.min(4,Math.floor(x/20)), row:Math.min(5,Math.floor(y/16.67)) });
+
+  // Helper: highlight zone
+  const highlightZone = (x,y,cls) => {
+    const {col,row} = getZone(x,y);
+    const z = grid.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+    if(z && !z.classList.contains('z-start')) z.classList.add(cls);
+  };
+
+  // Helper: draw arrow between two points (% coords)
+  const drawArrow = (x1,y1,x2,y2,color) => {
+    if(!svg) return;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1+'%'); line.setAttribute('y1',y1+'%');
+    line.setAttribute('x2',x2+'%'); line.setAttribute('y2',y2+'%');
+    line.setAttribute('stroke',color||'rgba(255,255,255,0.4)');
+    line.setAttribute('stroke-width','1.5');
+    line.setAttribute('marker-end','url(#arr)');
+    line.setAttribute('stroke-dasharray','4,3');
+    svg.appendChild(line);
+  };
+
+  // Zone highlight and arrow targets per instruction
+  const INSTR_TARGETS = {
+    'NP':  {zone:{x:20,y:5},  label:'Near Post'},
+    'FP':  {zone:{x:75,y:5},  label:'Far Post'},
+    
+    'EA':  {zone:{x:25,y:45}, label:'Edge of Area'},
+    'LO':  {zone:{x:20,y:50}, label:'Lurk Outside'},
+    'MK':  {zone:{x:50,y:5},  label:'GK Zone'},
+    'GF':  {zone:{x:50,y:18}, label:'Forward Run'},
+    'CS':  {zone:{x:10,y:20}, label:'Come Short'},
+    'SFC': {zone:{x:50,y:80}, label:'Stay Fwd'},
+  };
+
+  const isAttack = !currentSPScenario.startsWith('def-');
+
+  // Players — skip GK on attack set pieces
+  s.players.filter(p => !(isAttack && p.pos==='GK')).forEach(p => {
+    const instr = state.instrs[p.id] || p.instr;
+    const instrDef = INSTR_CODES[instr] || {label:instr, color:'#666'};
+    const target = INSTR_TARGETS[instr];
+
+    // Highlight starting zone
+    highlightZone(p.x, p.y, 'z-start');
+
+    // Highlight target zone and draw arrow for movement instructions
+    if(target && !p.isTaker && instr!=='SBI'&&instr!=='SB'&&instr!=='NSI') {
+      highlightZone(target.zone.x, target.zone.y, 'z-end');
+      drawArrow(p.x, p.y, target.zone.x, target.zone.y, instrDef.color);
+    }
+
+    // Player token
+    const el = document.createElement('div');
+    el.className = 'sp-player';
+    el.id = 'spp-'+p.id;
+    el.style.left = p.x + '%';
+    el.style.top  = p.y + '%';
+    el.style.background = p.isTaker ? '#e8c84a22' : instrDef.color+'33';
+    el.style.border = '1.5px solid ' + (p.isTaker ? '#e8c84a' : instrDef.color);
+    el.innerHTML = `<span class="pos-badge">${p.pos}</span><span class="instr-badge" style="color:${p.isTaker?'#e8c84a':instrDef.color}">${p.isTaker?'TKR':instr}</span>`;
+    el.title = p.name + ' — ' + instrDef.label;
+    if(!p.isTaker) makeDraggableSP(el, pitch);
+    pitch.appendChild(el);
+  });
+
+  renderDistribution();
+  renderDistributionLanding();
+  renderPlayerList();
+  renderSPAnalysis();
+  renderAnalyser();
+}
+
+function renderDistribution() {
+  const s = SCENARIOS[currentSPScenario];
+  const state = getSPState();
+  const el = document.getElementById('dist-grid');
+  const opts = DIST_OPTIONS[currentSPScenario];
+  if(!opts || !opts.length) { el.innerHTML = '<span style="font-size:0.58rem;color:#333">Defence — no delivery</span>'; return; }
+  el.innerHTML = opts.map(opt =>
+    `<div class="dist-btn${state.distribution===opt?' active':''}" onclick="setDistribution('${opt}')">${opt}</div>`
+  ).join('');
+  // Show/hide swing toggle
+  const swingEl = document.getElementById('swing-toggle');
+  if(swingEl) swingEl.style.display = USES_SWING.has(currentSPScenario) ? 'block' : 'none';
+}
+
+function setDistribution(opt) {
+  getSPState().distribution = opt;
+  renderDistribution();
+  renderDistributionLanding();
+  renderAnalyser();
+}
+
+function renderPlayerList() {
+  const s = SCENARIOS[currentSPScenario];
+  const state = getSPState();
+  const el = document.getElementById('sp-player-list');
+  const isAttack = !currentSPScenario.startsWith('def-');
+  el.innerHTML = s.players.filter(p => !(isAttack && p.pos==='GK')).map(p => {
+    const instr = state.instrs[p.id] || p.instr;
+    const instrDef = INSTR_CODES[instr] || {label:instr, color:'#666'};
+    if(p.isTaker) return `
+      <div class="sp-pl-row">
+        <div class="sp-pl-badge" style="background:#e8c84a22;border:1px solid #e8c84a;color:#e8c84a">TKR</div>
+        <div class="sp-pl-name">
+          <div class="pl-name">${p.name}</div>
+          <div class="sp-pl-role">Takes the ${currentSPScenario.includes('corner')?'corner':'free kick'}</div>
+        </div>
+      </div>`;
+    return `
+      <div class="sp-pl-row">
+        <div class="sp-pl-badge" style="background:${instrDef.color}22;border:1px solid ${instrDef.color};color:${instrDef.color}">${instr}</div>
+        <div class="sp-pl-name">
+          <div class="pl-name">${p.name}</div>
+          <div class="sp-pl-role">${instrDef.label}</div>
+        </div>
+        <select class="sp-instr-sel" onchange="setPlayerInstr(${p.id},this.value)">
+          ${s.availableInstr.map(c=>`<option value="${c}" ${c===instr?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>`;
+  }).join('');
+}
+
+function setPlayerInstr(id, instr) {
+  getSPState().instrs[id] = instr;
+  renderSP();
+  renderAnalyser();
+}
+
+function renderSPAnalysis() {
+  const s = SCENARIOS[currentSPScenario];
+  const el = document.getElementById('sp-analysis');
+  el.innerHTML = `<div class="title">💡 ${s.label} — Tips</div>
+    <ul>${s.tips.map(t=>`<li>${t}</li>`).join('')}</ul>`;
+}
+
+function makeDraggableSP(el, container) {
+  let sx, sy, sl, st;
+  const gp = e => e.touches ? {x:e.touches[0].clientX,y:e.touches[0].clientY} : {x:e.clientX,y:e.clientY};
+  const onStart = e => {
+    e.preventDefault();
+    const p=gp(e); sx=p.x; sy=p.y;
+    sl=parseFloat(el.style.left); st=parseFloat(el.style.top);
+    el.classList.add('dragging');
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('touchmove',onMove,{passive:false});
+    document.addEventListener('mouseup',onEnd);
+    document.addEventListener('touchend',onEnd);
+  };
+  const onMove = e => {
+    e.preventDefault();
+    const p=gp(e); const r=container.getBoundingClientRect();
+    el.style.left=Math.max(2,Math.min(98,sl+((p.x-sx)/r.width)*100))+'%';
+    el.style.top =Math.max(2,Math.min(98,st+((p.y-sy)/r.height)*100))+'%';
+  };
+  const onEnd = () => {
+    el.classList.remove('dragging');
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('touchmove',onMove);
+    document.removeEventListener('mouseup',onEnd);
+    document.removeEventListener('touchend',onEnd);
+  };
+  el.addEventListener('mousedown',onStart);
+  el.addEventListener('touchstart',onStart,{passive:false});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CONSEQUENCE ENGINE
+// ═══════════════════════════════════════════════════════════════
+
+const INSTRUCTIONS = [
+  // IN POSSESSION
+  { id:'width-wide',    cat:'In Possession', label:'Width — Wider',       short:'Wider' },
+  { id:'width-narrow',  cat:'In Possession', label:'Width — Narrower',    short:'Narrower' },
+  { id:'tempo-high',    cat:'In Possession', label:'Tempo — Higher',      short:'High Tempo' },
+  { id:'tempo-low',     cat:'In Possession', label:'Tempo — Lower',       short:'Low Tempo' },
+  { id:'direct',        cat:'In Possession', label:'Passing — More Direct', short:'Direct' },
+  { id:'possession',    cat:'In Possession', label:'Passing — Shorter',   short:'Short Pass' },
+  { id:'overlap',       cat:'In Possession', label:'Overlaps On',         short:'Overlaps' },
+  { id:'underlap',      cat:'In Possession', label:'Underlaps On',        short:'Underlaps' },
+  { id:'creative',      cat:'In Possession', label:'More Expressive',     short:'Expressive' },
+  // OUT OF POSSESSION
+  { id:'high-press',    cat:'Out of Possession', label:'Higher Defensive Line', short:'High Line' },
+  { id:'low-block',     cat:'Out of Possession', label:'Lower Defensive Line',  short:'Low Block' },
+  { id:'counter-press', cat:'Out of Possession', label:'Counter-Press',         short:'Counter Press' },
+  { id:'regroup',       cat:'Out of Possession', label:'Regroup',               short:'Regroup' },
+  { id:'trap-inside',   cat:'Out of Possession', label:'Trap Inside',           short:'Trap Inside' },
+  { id:'trap-outside',  cat:'Out of Possession', label:'Trap Outside',          short:'Trap Outside' },
+  { id:'get-stuck-in',  cat:'Out of Possession', label:'Get Stuck In',          short:'Tackle Hard' },
+  // TRANSITION
+  { id:'counter',       cat:'Transition', label:'Exploit on Counter',     short:'Counter' },
+  { id:'hold-shape',    cat:'Transition', label:'Hold Shape After Loss',  short:'Hold Shape' },
+];
+
+// Consequences database — each entry: what happens, trade-offs, required attributes, formation notes
+const CONSEQUENCES = {
+  'width-wide': {
+    headline: 'Your team stretches the pitch horizontally',
+    direct: [
+      'Wide players hug the touchline — creates more space in central zones',
+      'Opposition defensive line is forced to stretch — halfspaces open up',
+      'More crosses and wide combinations, fewer central passing lanes',
+      'Your fullbacks/wingbacks push higher to support width',
+    ],
+    tradeoffs: [
+      'Larger gaps between players — easier to play through on the counter',
+      'Your central midfielders must cover more ground horizontally',
+      'If the opposition plays a narrow press, your wide players get isolated',
+      'Transition risk: wide players take longer to get back defensively',
+    ],
+    attributes: ['Pace/Stamina for wide players (12+)', 'Work Rate for midfielders (13+)', 'Passing for wingbacks (12+)'],
+    formation_notes: {
+      '442':  'Wide MFs push to flanks — exposes central mid pairing. Need high work rate CMs.',
+      '433':  'Wingers pin opposition fullbacks. CBs must cover wider area if fullbacks push.',
+      '352':  'Wingbacks cover massive ground. Must have Stamina 15+ or they die in 70 mins.',
+      '343':  'Wide CBs stretch the back line — risky but creates huge space for wing-backs.',
+      '532':  'WBs become the primary width providers — need pace, stamina, and crossing.',
+    },
+  },
+  'width-narrow': {
+    headline: 'Your team funnels play through the centre',
+    direct: [
+      'Players concentrate centrally — creates overloads in the middle third',
+      'Opposition forced to keep the ball wide — you cede the flanks intentionally',
+      'More short passing triangles, quicker combinations through tight spaces',
+      'Forwards and midfielders crowd the central lanes creating passing options',
+    ],
+    tradeoffs: [
+      'Flanks completely undefended — crosses are easy to get',
+      'If the opposition has good wide players you will get exposed on the wings',
+      'You need players with high technique and vision to work in tight spaces',
+      'Low xG from crosses allowed — only works if your GK and CBs are aerial dominant',
+    ],
+    attributes: ['Technique 13+ for central players', 'Vision 12+ for midfielders', 'Heading/Jumping for CBs (13+) to deal with crosses'],
+    formation_notes: {
+      '442':  'Wide MFs tuck in — effectively becomes a 4-4-2 narrow. Opposition has free rein on flanks.',
+      '433':  'Wingers cut inside more — best with Inside Forwards who have high dribbling.',
+      '352':  'Naturally narrow — this makes it even more central. Wingbacks MUST bomb forward or you have no width at all.',
+      '343':  'Already central-heavy. Narrow width here is extreme — only viable with Pep-style technically gifted players.',
+    },
+  },
+  'tempo-high': {
+    headline: 'Fast, vertical, urgent — the game speeds up',
+    direct: [
+      'Players move the ball quicker — first time passes, early balls forward',
+      'Opposition has less time to get organised defensively',
+      'More direct transitions from defence to attack',
+      'Higher physical demand — players cover more distance per minute',
+    ],
+    tradeoffs: [
+      'More mistakes under pressure — players rush decisions',
+      'Stamina drains faster — you may need to rotate more',
+      'Ineffective if your players have low Decisions or Composure',
+      'Pressing teams will exploit the urgency — your build-up becomes predictable',
+    ],
+    attributes: ['Decisions 13+ for most players', 'First Touch 12+', 'Stamina 14+ for midfielders', 'Composure 12+'],
+    formation_notes: {
+      '442':  'Works well — simple structure allows quick vertical play through the two strikers.',
+      '4231': 'Great for quick transitions through the AM to the striker. AM needs high Decisions.',
+      '352':  'Risky — wingbacks struggle to recover quickly enough after high-tempo attacks.',
+    },
+  },
+  'tempo-low': {
+    headline: 'Patient, controlled, deliberate possession',
+    direct: [
+      'Players take their time — more passes, more retention before committing',
+      'Opposition is made to chase and work harder defensively',
+      'More opportunities to find the right pass rather than the quickest one',
+      'Build-up is more structured and less chaotic',
+    ],
+    tradeoffs: [
+      'Easier for the opposition to get organised — you lose the element of surprise',
+      'Boring if your players lack creativity — the slow play just goes sideways',
+      'Can invite pressure from high-pressing teams',
+      'Counterattacking teams love this — it gives them time to set their defensive shape',
+    ],
+    attributes: ['Passing 13+ for midfielders', 'Vision 13+', 'Composure 14+', 'Off the Ball 12+'],
+    formation_notes: {
+      '442':  'Not natural for a 4-4-2 — it\'s usually a fast direct formation. Needs DM cover.',
+      '4231': 'Natural fit — the double pivot holds possession while AM dictates tempo.',
+      '352':  'Works well — CB sweeper and DM can recycle possession with the wingbacks providing width.',
+    },
+  },
+  'direct': {
+    headline: 'Ball moves forward quickly — skip the midfield',
+    direct: [
+      'Passes are played forward sooner — fewer sideways or backwards passes',
+      'Strikers receive the ball with their back to goal more often',
+      'Midfielders make more forward runs to support direct passes',
+      'Higher ball in behind the defensive line — stretches opposition',
+    ],
+    tradeoffs: [
+      'Lose possession more often in midfield',
+      'Your striker needs to be strong and good in the air to hold the ball up',
+      'Less control of the game — opposition can win it back and hit you quickly',
+      'Ineffective against a deep defensive block — no space to play into',
+    ],
+    attributes: ['Strength 13+ for strikers', 'Heading 13+', 'Pace for runners (14+)', 'Long Balls 12+ for defenders/DMs'],
+    formation_notes: {
+      '442':  'Classic long ball 4-4-2. Target Forward + AF combination is perfect for this.',
+      '532':  'WBs get the ball early and launch it forward — direct and wide. Very effective.',
+      '343':  'Not ideal — the three CBs want to build from the back. Direct play wastes that.',
+    },
+  },
+  'possession': {
+    headline: 'Short passes, build from the back, keep the ball',
+    direct: [
+      'Players look for the closest safest option — no risk passes',
+      'Build-up starts from the goalkeeper — slow and controlled',
+      'More combinations and triangles in tight spaces',
+      'Opposition has to press to win the ball — creates spaces behind their press',
+    ],
+    tradeoffs: [
+      'Very vulnerable to high press — if players are caught in possession deep, it\'s lethal',
+      'Requires high technical quality throughout the entire team',
+      'Slow to transition — counterattacks are harder to execute',
+      'Can be outmuscled by physical pressing teams',
+    ],
+    attributes: ['Passing 14+ for most players', 'First Touch 13+', 'Technique 13+', 'Composure 14+ for defenders'],
+    formation_notes: {
+      '433':  'Perfect for this — positional play structure with goalkeeper as first man.',
+      '352':  'Works well — 3 CBs provide numerical advantage in build-up against a 2-man press.',
+      '442':  'Harder — the wide mids must have technical quality or the wide build-up breaks down.',
+    },
+  },
+  'overlap': {
+    headline: 'Fullback/wingback runs outside the winger',
+    direct: [
+      'Winger holds the ball and waits — fullback makes the overlapping run wide',
+      'Creates a 2v1 on the flank — forces the opposition to make a decision',
+      'More crosses from deep wide positions',
+      'Winger can cut inside onto their stronger foot while fullback provides width',
+    ],
+    tradeoffs: [
+      'Fullback is high and wide — if you lose the ball you have a massive gap on that flank',
+      'Winger must have patience and good passing to wait for the overlap',
+      'Needs stamina from the fullback — they cover huge distances',
+      'Predictable if overused — opposition will prepare for the overlap run',
+    ],
+    attributes: ['Stamina 14+ for overlapping FB/WB', 'Crossing 13+', 'Off the Ball 13+ for the winger (to time the run)'],
+    formation_notes: {
+      '433':  'Textbook overlap setup. FB overlaps, Winger cuts inside. Classic.',
+      '442':  'Works but Wide Mid must hold position and wait — needs high Work Rate.',
+      '532':  'The WB IS the overlap — this instruction just makes it more deliberate and timed.',
+    },
+  },
+  'underlap': {
+    headline: 'Fullback/wingback runs inside behind the winger',
+    direct: [
+      'Creates runs into halfspace — the most dangerous zone on the pitch',
+      'Winger stays wide, fullback cuts inside into zone 12/14 area',
+      'Opens up shooting lanes for the underlapping runner',
+      'Confuses defensive shape — the fullback isn\'t where they expect',
+    ],
+    tradeoffs: [
+      'Leaves the wide defensive channel completely empty',
+      'Requires the winger to hold wide — against a defensive winger this is easy to block',
+      'Higher tactical understanding required — not all players execute this well',
+      'If the run is timed badly you create a jam in the halfspace',
+    ],
+    attributes: ['Runs With Ball 12+ for FB/WB', 'Off the Ball 13+', 'Dribbling 12+', 'Anticipation 13+'],
+    formation_notes: {
+      '433':  'Best with an IWB — they naturally invert, this just formalises it.',
+      '352':  'Dangerous and effective — the WB runs into halfspace while 3 CBs hold the back line.',
+    },
+  },
+  'high-press': {
+    headline: 'Your defensive line sits high — opponents get less space',
+    direct: [
+      'Opposition attackers start in an offside position more easily',
+      'Less space for the opposition to play between your lines',
+      'Forces opposition to play long — suits teams with dominant aerial CBs',
+      'When you win the ball high, you\'re already in an attacking position',
+    ],
+    tradeoffs: [
+      'One ball in behind and your CB is in a foot race with a fast striker',
+      'Requires disciplined, intelligent CBs — one wrong step = goal',
+      'Works very badly against a team with a fast, direct style',
+      'If your pressing doesn\'t work, the space behind is enormous',
+    ],
+    attributes: ['Pace 14+ for CBs', 'Anticipation 14+', 'Positioning 14+', 'Concentration 14+'],
+    formation_notes: {
+      '433':  'Natural fit — press high, win it high, short distance to goal.',
+      '352':  'Risky — if the WB gets beaten the wide CB is exposed on a massive area.',
+      '442':  'Requires wide MFs to track back aggressively — high work rate essential.',
+    },
+  },
+  'low-block': {
+    headline: 'Deep defensive shape — compact and hard to break',
+    direct: [
+      'Everyone sits behind the ball — 8+ players in your own half',
+      'Very little space between your lines — suffocates opposition through-balls',
+      'Opposition is forced to take shots from distance or wide',
+      'On winning the ball, quick transition forward catches opposition high',
+    ],
+    tradeoffs: [
+      'You cede possession entirely — expect to see 30-40% of the ball',
+      'Physically and mentally exhausting for your players',
+      'Difficult to get out cleanly — long balls or quick transitions only',
+      'Against a patient team, the pressure builds and eventually breaks',
+    ],
+    attributes: ['Positioning 14+ for defenders', 'Concentration 14+', 'Work Rate 14+', 'Stamina 14+'],
+    formation_notes: {
+      '532':  'Perfect — 5 across the back makes you almost impenetrable at home.',
+      '541':  'The ultimate bunker. Basically impossible to break with the right players.',
+      '442':  'Classic low block — works well with two banks of four dropping deep.',
+    },
+  },
+  'counter-press': {
+    headline: 'Immediately chase the ball when you lose it',
+    direct: [
+      'Players sprint toward the ball the second possession is lost',
+      'The opposition has no time to reorganise — 5-6 second window to win it back',
+      'If successful: instant transition with opposition disorganised',
+      'Gegenpressing in its purest form — the Klopp/Tuchel method',
+    ],
+    tradeoffs: [
+      'If the counter-press is beaten, your shape is completely open',
+      'Extremely high stamina cost — players who counter-press need 15+ stamina',
+      'A calm team with good passing can bypass the press easily',
+      'Cannot sustain for 90 minutes — rotation is essential',
+    ],
+    attributes: ['Stamina 15+', 'Aggression 13+', 'Work Rate 14+', 'Bravery 12+', 'Pressing 13+'],
+    formation_notes: {
+      '433':  'Best formation for counter-pressing — the front 3 press as a unit.',
+      '442':  'Works well — 2 strikers and 2 wide mids make a pressing block of 4.',
+      '532':  'Dangerous — the WBs press high but leave 3 CBs exposed on a massive area.',
+    },
+  },
+  'regroup': {
+    headline: 'Drop into shape when you lose the ball',
+    direct: [
+      'Players retreat to their defensive positions first — no chasing',
+      'Creates a compact block — harder to penetrate than a disorganised press',
+      'Opposition has time to advance but meets an organised defence',
+      'Less physical demand — sustainable for the whole match',
+    ],
+    tradeoffs: [
+      'Opposition gets a free 10-15 yards to advance before they meet resistance',
+      'Doesn\'t win the ball quickly — you accept being without possession',
+      'Can feel passive — opposition likes this if they have patient build-up players',
+    ],
+    attributes: ['Positioning 13+', 'Concentration 13+', 'Teamwork 13+'],
+    formation_notes: {
+      '532':  'Natural fit — the back 5 drops into a solid block while 3 mids cover the space.',
+      '442':  'Classic regroup — two banks of four that make a wall at your own half.',
+    },
+  },
+  'trap-inside': {
+    headline: 'Force the opposition into central areas',
+    direct: [
+      'Your players steer the ball toward the centre — stop it going wide',
+      'Central areas are more congested — easier to win the ball back',
+      'Winning the ball centrally = instant counter through the middle with pace',
+      'Limits the effectiveness of wide players and crossing',
+    ],
+    tradeoffs: [
+      'Central areas are dangerous — a quick one-two through the middle is lethal',
+      'If the opponent has a creative AM or CAM, you\'re funnelling the ball to them',
+      'Requires intelligent pressing coordination — works poorly with low-teamwork players',
+    ],
+    attributes: ['Pressing 13+', 'Teamwork 14+', 'Anticipation 13+'],
+    formation_notes: {
+      '433':  'Excellent — press centrally, win it centrally, short distance to score.',
+      '442':  'Works well with 2 DMs who can win the ball in the central block.',
+    },
+  },
+  'trap-outside': {
+    headline: 'Force the opposition out wide',
+    direct: [
+      'Easier to defend against — opponents have fewer options when wide and under pressure',
+      'Limits through-ball danger through the centre',
+      'Opposition has to cross — good if your CBs win everything in the air',
+    ],
+    tradeoffs: [
+      'Doesn\'t yield as many transition opportunities — winning it wide is less dangerous',
+      'Wide players must press with intensity — high stamina required on the flanks',
+      'If the opponent has elite wing play, you\'re feeding them the ball on their strength',
+    ],
+    attributes: ['Stamina 14+ for wide players', 'Work Rate 14+', 'Heading/Jumping for CBs'],
+    formation_notes: {
+      '532':  'WBs press wide and force the ball to the touchline — CBs dominate the air.',
+      '442':  'Wide MFs do the forcing — needs them to be defensively disciplined.',
+    },
+  },
+  'counter': {
+    headline: 'Explode forward the moment you win the ball',
+    direct: [
+      'Players immediately look to advance — no holding the ball waiting',
+      'Runners make immediate forward runs when possession is won',
+      'Catches the opposition high and disorganised',
+      'Fast, direct, vertical football in transition',
+    ],
+    tradeoffs: [
+      'If the counter goes wrong you lose the ball in a dangerous position',
+      'Needs pace up front to execute — slow strikers kill the counter',
+      'If overused, the opposition will drop deeper to stop the space',
+    ],
+    attributes: ['Pace 14+ for forwards/wide', 'Off the Ball 14+', 'Decisions 13+ (know when to run)'],
+    formation_notes: {
+      '442':  'Perfect — two strikers to counter into. Atletico Madrid style.',
+      '532':  'WBs make counter runs — devastating when it works but leaves 3 CBs alone.',
+      '433':  'Front 3 burst forward — works brilliantly with a striker who has high pace.',
+    },
+  },
+  'hold-shape': {
+    headline: 'Stay organised when you lose the ball',
+    direct: [
+      'Players retreat to their positions first before engaging',
+      'Prevents the chaotic transition that leaves gaps',
+      'More conservative — accept the opponent has possession for a moment',
+    ],
+    tradeoffs: [
+      'You miss the immediate chance to win it back high',
+      'Gives the opposition time to advance — they can play at their own pace',
+      'Not ideal against teams that build up very slowly',
+    ],
+    attributes: ['Positioning 13+', 'Teamwork 13+', 'Concentration 13+'],
+    formation_notes: {
+      '532':  'Natural — the 5 drop into shape, hard to penetrate.',
+      '442':  'Good for a defensively cautious team. Two banks of four are hard to break.',
+    },
+  },
+  'get-stuck-in': {
+    headline: 'Aggressive tackling — win the ball physically',
+    direct: [
+      'Players go to ground to win the ball — more slide tackles',
+      'More physical duels — intimidates technical players',
+      'Can disrupt the opposition\'s rhythm through aggression',
+    ],
+    tradeoffs: [
+      'More fouls — your players will get more yellow cards',
+      'Aggressive tackling near your own box = gift free kicks in dangerous areas',
+      'Gets you in trouble vs technically gifted players who draw fouls easily',
+    ],
+    attributes: ['Tackling 14+', 'Bravery 13+', 'Aggression (must be disciplined — not reckless)'],
+    formation_notes: {
+      '442':  'Works well — aggressive two-striker press combined with physical midfield.',
+      '532':  'Risky in defence — a foul by a CB near the box with 5 defenders = exposed.',
+    },
+  },
+  'creative': {
+    headline: 'Let players express themselves — more freedom',
+    direct: [
+      'Players attempt more dribbles, riskier passes, creative decisions',
+      'Unpredictable — harder for the opposition to read',
+      'Can unlock defensive blocks that patient passing can\'t',
+      'Generates moments of individual brilliance',
+    ],
+    tradeoffs: [
+      'Loses possession more — gifting the ball cheaply in dangerous areas',
+      'Completely useless if your players have low Flair, Technique, or Dribbling',
+      'Can break down team structure — players go freelance',
+      'Young players with high flair but low Composure will make costly mistakes',
+    ],
+    attributes: ['Flair 14+ — ESSENTIAL. Technique 14+. Dribbling 13+. Composure 13+'],
+    formation_notes: {
+      '433':  'Best with a Trequartista or Raumdeuter — they thrive on freedom.',
+      '4231': 'AM on expressive duty = match-winner or liability depending on their stats.',
+    },
+  },
+};
+
+let selectedInstruction = null;
+
+
+// ── INIT ──────────────────────────────────────────────────────
+renderScenarioTabs('att-corner');
+renderSP();
+</script>
+
+<script>
+if('serviceWorker' in navigator) {
+  const sw = `
+    const CACHE = 'fm-tools-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', self.location.href])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return res;
+      }).catch(() => caches.match('./'))));
+    });
+  `;
+  const blob = new Blob([sw], {type:'application/javascript'});
+  const url = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).then(() => URL.revokeObjectURL(url));
+}
+</script>
+
+</body>
+</html>
