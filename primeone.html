@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA -->
+  <meta name="application-name" content="PrimeOne">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PrimeOne">
+  <meta name="description" content="FM Tactical Analysis — Formation, Instructions, Consequences">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#e8c84a">
+  <link rel="manifest" href="data:application/json,%7B%22name%22%3A%22PrimeOne%22%2C%22short_name%22%3A%22PrimeOne%22%2C%22description%22%3A%22FM%20Tactical%20Analysis%20%E2%80%94%20Formation%2C%20Instructions%2C%20Consequences%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230e0e0e%22%2C%22theme_color%22%3A%22%23e8c84a%22%2C%22orientation%22%3A%22portrait%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fsvg%2Bxml%2C%253Csvg%2520xmlns%253D'http%253A%252F%252Fwww.w3.org%252F2000%252Fsvg'%2520viewBox%253D'0%25200%2520100%2520100'%253E%253Crect%2520width%253D'100'%2520height%253D'100'%2520fill%253D'%25230e0e0e'%252F%253E%253Ctext%2520y%253D'.9em'%2520font-size%253D'80'%2520x%253D'50%2525'%2520dominant-baseline%253D'middle'%2520text-anchor%253D'middle'%253E%25E2%259A%25BD%253C%252Ftext%253E%253C%252Fsvg%253E%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fsvg%2Bxml%22%7D%5D%7D">
+<title>PrimeOne</title>
+<style>
+
+- { margin:0; padding:0; box-sizing:border-box; }
+  body {
+  background:#0e0e0e;
+  color:white;
+  font-family:monospace;
+  padding:14px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:10px;
+  min-height:100vh;
+  }
+
+h2 { color:#e8c84a; letter-spacing:3px; font-size:1.1rem; margin-top:4px; }
+.subtitle { color:#444; font-size:0.58rem; letter-spacing:1.5px; text-transform:uppercase; }
+
+.tab {
+flex:1; padding:7px; text-align:center; font-family:monospace; font-size:0.68rem;
+background:#1a1a1a; border:1px solid #333; border-radius:4px; cursor:pointer; color:#666; transition:all 0.15s;
+}
+.tab:hover { border-color:#666; color:#aaa; }
+.tab.active { background:#2a2a18; border-color:#e8c84a; color:#e8c84a; }
+
+.builder { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-bottom:6px; }
+
+select {
+background:#181818; color:white;
+border:1px solid #333; padding:6px 9px;
+font-family:monospace; font-size:0.72rem;
+border-radius:4px; cursor:pointer;
+transition:border-color 0.15s;
+}
+select:focus { outline:none; border-color:#e8c84a; }
+
+button {
+background:#181818; color:#e8c84a;
+border:1px solid #e8c84a; padding:6px 12px;
+font-family:monospace; font-size:0.72rem;
+border-radius:4px; cursor:pointer; transition:all 0.15s;
+}
+button:hover { background:#222218; }
+button.danger { color:#ff6b6b; border-color:#ff6b6b; }
+button.danger:hover { background:#221818; }
+
+.role-list {
+display:flex; flex-wrap:wrap; gap:5px;
+min-height:28px; width:min(820px,97vw);
+}
+.role-tag {
+display:flex; align-items:center; gap:5px;
+background:#181818; border:1px solid #2a2a2a;
+border-radius:4px; padding:4px 9px;
+font-size:0.63rem; color:#ccc;
+transition:border-color 0.15s;
+}
+.role-tag:hover { border-color:#444; }
+.role-tag .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; box-shadow:0 0 0 1.5px rgba(255,255,255,0.15); }
+.side-badge {
+font-size:0.55rem; padding:1px 5px; border-radius:2px;
+background:#252525; color:#888; letter-spacing:0.5px;
+}
+.role-tag .rm { color:#ff6b6b; cursor:pointer; font-size:0.75rem; line-height:1; }
+.role-tag .rm:hover { color:#fff; }
+
+.mentality-bar { display:flex; gap:4px; flex-wrap:wrap; width:min(820px,97vw); }
+
+/* Instruction selectors */
+.instr-bar {
+display:flex; gap:3px; flex-wrap:wrap; width:min(820px,97vw);
+padding:5px 0;
+}
+.instr-group {
+display:flex; flex-direction:column; gap:2px; flex:1; min-width:100px;
+}
+.instr-group-label {
+font-size:0.46rem; color:#444; text-transform:uppercase; letter-spacing:1px;
+}
+.instr-opts { display:flex; gap:2px; }
+.iopt {
+flex:1; padding:3px 2px; text-align:center; font-family:monospace;
+font-size:0.54rem; background:#141414; border:1px solid #222;
+border-radius:3px; cursor:pointer; color:#555; transition:all 0.12s;
+white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.iopt:hover { border-color:#666; color:#aaa; }
+.iopt.active { background:#1a1a10; border-color:#e8c84a88; color:#e8c84a; }
+
+/* Verdict card inside analysis */
+.verdict-card {
+background:#0f0f0f; border:1px solid #1a1a1a; border-radius:5px;
+padding:10px 12px; margin-top:6px; width:100%;
+}
+.verdict-card .vt-title {
+font-size:0.52rem; text-transform:uppercase; letter-spacing:1.2px;
+font-weight:bold; margin-bottom:6px;
+}
+.verdict-card .vt-style {
+display:inline-block; padding:3px 10px; border-radius:3px;
+font-size:0.7rem; font-weight:bold; letter-spacing:1px; margin-bottom:6px;
+}
+.verdict-card .vt-item {
+font-size:0.6rem; line-height:1.7; color:#666; padding-left:4px;
+}
+.verdict-card .vt-item.pos  { color:#55cc77; }
+.verdict-card .vt-item.neg  { color:#ff6b6b; }
+.verdict-card .vt-item.warn { color:#e8c84a; }
+.verdict-card .vt-item.tip  { color:#77aaff; }
+.verdict-card .vt-item.ref  { color:#aa77ff; font-style:italic; }
+.vt-bar-wrap { height:4px; background:#1a1a1a; border-radius:2px; margin:4px 0 8px; }
+.vt-bar { height:100%; border-radius:2px; transition:width 0.4s; }
+.men-btn {
+flex:1; min-width:78px; padding:7px 4px; text-align:center;
+font-family:monospace; font-size:0.62rem; letter-spacing:0.5px;
+border-radius:4px; cursor:pointer;
+background:#181818; border:1px solid #2a2a2a;
+color:#555; transition:all 0.15s;
+}
+.men-btn:hover { border-color:#666; color:#aaa; }
+.men-btn.active { font-weight:bold; }
+.men-btn[data-men=“Contain”].active   { background:#111a2a; border-color:#5577cc; color:#88aaff; }
+.men-btn[data-men=“Defensive”].active { background:#112211; border-color:#447744; color:#88cc88; }
+.men-btn[data-men=“Counter”].active   { background:#221133; border-color:#8855aa; color:#cc99ff; }
+.men-btn[data-men=“Control”].active   { background:#222211; border-color:#e8c84a; color:#e8c84a; }
+.men-btn[data-men=“Attacking”].active { background:#221811; border-color:#dd8855; color:#ffaa77; }
+.men-btn[data-men=“Overload”].active  { background:#221111; border-color:#ff4444; color:#ff6666; }
+
+.men-desc {
+width:min(820px,97vw);
+font-size:0.6rem; color:#555; text-align:center;
+min-height:14px; letter-spacing:0.5px;
+transition:color 0.2s;
+}
+
+.view-toggle { display:flex; gap:4px; width:min(820px,97vw); }
+.vtog {
+flex:1; padding:7px; text-align:center;
+font-family:monospace; font-size:0.66rem;
+background:#181818; border:1px solid #2a2a2a;
+border-radius:4px; cursor:pointer; color:#555;
+transition:all 0.15s;
+}
+.vtog:hover { border-color:#666; color:#aaa; }
+.vtog[data-v=“START”].active  { background:#222211; border-color:#e8c84a; color:#e8c84a; }
+.vtog[data-v=“IPF”].active    { background:#112211; border-color:#55cc77; color:#77ee99; }
+.vtog[data-v=“OOPF”].active   { background:#221811; border-color:#dd8844; color:#ffaa66; }
+
+.col-labels {
+display:grid; grid-template-columns:30% 20% 20% 30%;
+width:min(820px,97vw); text-align:center;
+font-size:0.56rem; color:#555;
+letter-spacing:1px; text-transform:uppercase;
+margin-top:4px;
+}
+
+.grid {
+width:min(820px,97vw); aspect-ratio:1.9;
+display:grid; grid-template-columns:30% 20% 20% 30%;
+grid-template-rows:repeat(3,1fr);
+border:2px solid #333; border-radius:2px;
+overflow:hidden;
+}
+
+.cell {
+border:1px solid #1e1e1e;
+display:flex; flex-direction:column;
+align-items:center; justify-content:center;
+font-size:clamp(0.75rem,2vw,1.1rem); font-weight:bold;
+color:#2a2a2a; transition:background 0.25s, color 0.25s;
+gap:2px;
+}
+
+.sub-grid {
+display:grid; grid-template-columns:48% 52%;
+grid-template-rows:repeat(3,1fr);
+border:1px solid #1e1e1e;
+}
+.sub {
+border:1px solid #181818;
+display:flex; flex-direction:column;
+align-items:center; justify-content:center;
+font-size:clamp(0.46rem,1.1vw,0.66rem); font-weight:bold;
+color:#2a2a2a; transition:background 0.25s, color 0.25s;
+gap:1px;
+}
+
+.cell.sole,    .sub.sole    { background:#0d2a0d; color:#55cc77; }
+.cell.shared,  .sub.shared  { background:#2a2200; color:#e8c84a; }
+.cell.crowded, .sub.crowded { background:#2a0d0d; color:#ff6b6b; }
+.cell.dead,    .sub.dead    { background:#111122; color:#334488; }
+
+.cell.ipf-sole,    .sub.ipf-sole    { background:#0a2e14; color:#44dd77; }
+.cell.ipf-shared,  .sub.ipf-shared  { background:#1e2e00; color:#aadd33; }
+.cell.ipf-crowded, .sub.ipf-crowded { background:#3a1800; color:#ff9933; }
+.cell.ipf-dead,    .sub.ipf-dead    { background:#141420; color:#334488; }
+
+.cell.oopf-sole,    .sub.oopf-sole    { background:#160d2a; color:#aa77ff; }
+.cell.oopf-shared,  .sub.oopf-shared  { background:#2a0d20; color:#ff77cc; }
+.cell.oopf-crowded, .sub.oopf-crowded { background:#2a0808; color:#ff5555; }
+.cell.oopf-dead,    .sub.oopf-dead    { background:#141018; color:#553388; }
+
+.zone-dots {
+display:flex; flex-wrap:wrap; gap:3px;
+justify-content:center; max-width:95%; margin-top:2px;
+}
+.zdot {
+width:9px; height:9px; border-radius:50%; flex-shrink:0;
+transition:transform 0.15s;
+cursor:default;
+box-shadow: 0 0 0 1.5px rgba(0,0,0,0.8), 0 0 0 2.5px rgba(255,255,255,0.15);
+}
+.zdot:hover { transform:scale(1.7); }
+
+.cell, .sub { position:relative; cursor:default; }
+.cell:hover, .sub:hover { filter:brightness(1.25); }
+.zone-tip {
+display:none; position:absolute; bottom:calc(100% + 4px); left:50%;
+transform:translateX(-50%); background:#1a1a1a; border:1px solid #444;
+border-radius:4px; padding:4px 8px; font-size:0.58rem; color:#ccc;
+white-space:nowrap; z-index:99; pointer-events:none;
+box-shadow:0 2px 8px rgba(0,0,0,0.6);
+}
+.cell:hover .zone-tip, .sub:hover .zone-tip { display:block; }
+
+.legend { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+.leg { display:flex; align-items:center; gap:4px; font-size:0.57rem; color:#555; }
+.ls { width:10px; height:10px; border-radius:2px; }
+
+.zone-count {
+position:absolute; top:2px; right:3px;
+font-size:0.42rem; color:#444; font-weight:normal;
+pointer-events:none;
+}
+
+.analysis {
+width:min(820px,97vw);
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+gap:7px;
+}
+.acard {
+background:#111; border:1px solid #1e1e1e;
+border-radius:6px; padding:11px 13px;
+font-size:0.64rem; line-height:1.7;
+transition:border-color 0.2s;
+}
+.acard:hover { border-color:#333; }
+.acard .atitle {
+font-size:0.56rem; text-transform:uppercase;
+letter-spacing:1.2px; margin-bottom:6px; font-weight:bold;
+}
+.acard.green  { border-color:#1a3a1a; } .acard.green  .atitle { color:#55cc77; }
+.acard.yellow { border-color:#3a3000; } .acard.yellow .atitle { color:#e8c84a; }
+.acard.red    { border-color:#3a1111; } .acard.red    .atitle { color:#ff6b6b; }
+.acard.blue   { border-color:#112233; } .acard.blue   .atitle { color:#77bbff; }
+.acard.purple { border-color:#221133; } .acard.purple .atitle { color:#bb88ff; }
+.acard ul { padding-left:13px; color:#777; }
+.acard li { margin-bottom:4px; }
+.acard li::marker { color:#444; }
+
+.empty-state { color:#2a2a2a; font-size:0.68rem; text-align:center; padding:14px; letter-spacing:0.5px; }
+.divider { width:min(820px,97vw); border:none; border-top:1px solid #181818; }
+
+.save-bar {
+display:flex; align-items:center; gap:6px; flex-wrap:wrap;
+padding:5px 0; margin-top:2px;
+}
+.save-slot {
+display:flex; align-items:center; gap:3px;
+background:#181818; border:1px solid #2a2a2a;
+border-radius:4px; padding:3px 8px;
+font-family:monospace; font-size:0.62rem; color:#888;
+cursor:pointer; transition:all 0.15s;
+}
+.save-slot:hover { border-color:#e8c84a; color:#e8c84a; }
+.save-slot .sl-del { color:#444; margin-left:4px; font-size:0.7rem; cursor:pointer; }
+.save-slot .sl-del:hover { color:#ff6b6b; }
+</style>
+
+</head>
+<body>
+
+<h2>PRIMEONE</h2>
+<p class="subtitle">Formation · Instructions · Consequences</p>
+
+<div style="display:flex;gap:4px;width:min(820px,97vw)">
+  <div class="tab active" id="tab-manual-btn" onclick="switchTab('manual')">✏️ Build Manually</div>
+  <div class="tab" id="tab-preset-btn" onclick="switchTab('preset')">📋 Use a Formation</div>
+</div>
+
+<div id="tab-manual" style="width:min(820px,97vw);display:block">
+  <div class="builder">
+    <select id="sel-sector"><option value="">Position Group</option></select>
+    <select id="sel-role"><option value="">Role</option></select>
+    <select id="sel-side"><option value="">Side</option></select>
+    <button onclick="addRole()">+ Add</button>
+    <button class="danger" onclick="clearAll()">Clear All</button>
+  </div>
+</div>
+
+<div id="tab-preset" style="width:min(820px,97vw);display:none">
+  <div id="preset-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:5px;"></div>
+</div>
+
+<!-- ACTIVE LINEUP TAGS -->
+
+<div class="role-list" id="role-list">
+  <span class="empty-state">No players added yet — build your lineup above</span>
+</div>
+
+<hr class="divider">
+
+<!-- GAME PLAN / MENTALITY -->
+
+<div class="mentality-bar">
+  <div class="men-btn" data-men="Contain"   onclick="setMentality('Contain')">Contain</div>
+  <div class="men-btn" data-men="Defensive" onclick="setMentality('Defensive')">Defensive</div>
+  <div class="men-btn" data-men="Counter"   onclick="setMentality('Counter')">Counter</div>
+  <div class="men-btn" data-men="Control"   onclick="setMentality('Control')">Control</div>
+  <div class="men-btn" data-men="Attacking" onclick="setMentality('Attacking')">Attacking</div>
+  <div class="men-btn" data-men="Overload"  onclick="setMentality('Overload')">Overload</div>
+</div>
+<div class="men-desc" id="men-desc">Pick a game plan to see how your shape changes</div>
+
+<!-- TACTICAL INSTRUCTIONS -->
+
+<div class="instr-bar" id="instr-bar">
+  <!-- ROW 1: Shape -->
+  <div class="instr-group">
+    <div class="instr-group-label">Width</div>
+    <div class="instr-opts">
+      <div class="iopt" data-grp="width" data-val="narrow"   onclick="setInstr('width','narrow')">Narrow</div>
+      <div class="iopt" data-grp="width" data-val="balanced" onclick="setInstr('width','balanced')">Bal.</div>
+      <div class="iopt" data-grp="width" data-val="wide"     onclick="setInstr('width','wide')">Wide</div>
+    </div>
+  </div>
+  <div class="instr-group">
+    <div class="instr-group-label">Tempo</div>
+    <div class="instr-opts">
+      <div class="iopt" data-grp="tempo" data-val="slow"   onclick="setInstr('tempo','slow')">Slow</div>
+      <div class="iopt" data-grp="tempo" data-val="normal" onclick="setInstr('tempo','normal')">Norm.</div>
+      <div class="iopt" data-grp="tempo" data-val="fast"   onclick="setInstr('tempo','fast')">Fast</div>
+    </div>
+  </div>
+  <div class="instr-group">
+    <div class="instr-group-label">Freedom</div>
+    <div class="instr-opts">
+      <div class="iopt" data-grp="freedom" data-val="disciplined" onclick="setInstr('freedom','disciplined')">Disc.</div>
+      <div class="iopt" data-grp="freedom" data-val="balanced"    onclick="setInstr('freedom','balanced')">Bal.</div>
+      <div class="iopt" data-grp="freedom" data-val="expressive"  onclick="setInstr('freedom','expressive')">Expr.</div>
+    </div>
+  </div>
+</div>
+
+<div class="instr-bar" id="instr-bar-def">
+  <!-- ROW 2: Defence -->
+  <div class="instr-group">
+    <div class="instr-group-label">Def. Line</div>
+    <div class="instr-opts">
+      <div class="iopt" data-grp="dline" data-val="deep"     onclick="setInstr('dline','deep')">Deep</div>
+      <div class="iopt" data-grp="dline" data-val="balanced" onclick="setInstr('dline','balanced')">Bal.</div>
+      <div class="iopt" data-grp="dline" data-val="high"     onclick="setInstr('dline','high')">High</div>
+    </div>
+  </div>
+  <div class="instr-group">
+    <div class="instr-group-label">Closing</div>
+    <div class="instr-opts">
+      <div class="iopt" data-grp="closing" data-val="sit"     onclick="setInstr('closing','sit')">Sit</div>
+      <div class="iopt" data-grp="closing" data-val="ownhalf" onclick="setInstr('closing','ownhalf')">Own½</div>
+      <div class="iopt" data-grp="closing" data-val="allover" onclick="setInstr('closing','allover')">All</div>
+    </div>
+  </div>
+  <div class="instr-group">
+    <div class="instr-group-label">Tackling</div>
+    <div class="instr-opts">
+      <div class="iopt" data-grp="tackling" data-val="cautious"  onclick="setInstr('tackling','cautious')">Caut.</div>
+      <div class="iopt" data-grp="tackling" data-val="normal"    onclick="setInstr('tackling','normal')">Norm.</div>
+      <div class="iopt" data-grp="tackling" data-val="committed" onclick="setInstr('tackling','committed')">Comm.</div>
+    </div>
+  </div>
+  <div class="instr-group">
+    <div class="instr-group-label">Offside</div>
+    <div class="instr-opts">
+      <div class="iopt" data-grp="offside" data-val="no"  onclick="setInstr('offside','no')">No</div>
+      <div class="iopt" data-grp="offside" data-val="yes" onclick="setInstr('offside','yes')">Yes</div>
+    </div>
+  </div>
+</div>
+
+<div class="instr-bar" id="instr-bar-att">
+  <!-- ROW 3: Attack -->
+  <div class="instr-group">
+    <div class="instr-group-label">Passing</div>
+    <div class="instr-opts">
+      <div class="iopt" data-grp="passing" data-val="short"  onclick="setInstr('passing','short')">Short</div>
+      <div class="iopt" data-grp="passing" data-val="mixed"  onclick="setInstr('passing','mixed')">Mix.</div>
+      <div class="iopt" data-grp="passing" data-val="direct" onclick="setInstr('passing','direct')">Direct</div>
+      <div class="iopt" data-grp="passing" data-val="long"   onclick="setInstr('passing','long')">Long</div>
+    </div>
+  </div>
+  <div class="instr-group">
+    <div class="instr-group-label">Focus</div>
+    <div class="instr-opts">
+      <div class="iopt" data-grp="focus" data-val="left"   onclick="setInstr('focus','left')">L</div>
+      <div class="iopt" data-grp="focus" data-val="centre" onclick="setInstr('focus','centre')">C</div>
+      <div class="iopt" data-grp="focus" data-val="right"  onclick="setInstr('focus','right')">R</div>
+      <div class="iopt" data-grp="focus" data-val="flanks" onclick="setInstr('focus','flanks')">Both</div>
+      <div class="iopt" data-grp="focus" data-val="mixed"  onclick="setInstr('focus','mixed')">Mix.</div>
+    </div>
+  </div>
+  <div class="instr-group">
+    <div class="instr-group-label">GK Dist.</div>
+    <div class="instr-opts">
+      <div class="iopt" data-grp="gkdist" data-val="short" onclick="setInstr('gkdist','short')">Short</div>
+      <div class="iopt" data-grp="gkdist" data-val="mixed" onclick="setInstr('gkdist','mixed')">Mix.</div>
+      <div class="iopt" data-grp="gkdist" data-val="long"  onclick="setInstr('gkdist','long')">Long</div>
+    </div>
+  </div>
+</div>
+
+<!-- Final Third — row-pair grid -->
+
+<div class="instr-bar" id="instr-bar-ft" style="flex-direction:column;gap:2px">
+  <div class="instr-group-label">Final Third</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;width:100%">
+    <div class="iopt" data-grp="ft_row0" data-val="early-crosses" onclick="setInstrFT('ft_row0','early-crosses')">Early Crosses</div>
+    <div class="iopt" data-grp="ft_row0" data-val="look-overlap"  onclick="setInstrFT('ft_row0','look-overlap')">Look for Overlap</div>
+    <div class="iopt" data-grp="ft_row1" data-val="shoot-on-sight" onclick="setInstrFT('ft_row1','shoot-on-sight')">Shoot on Sight</div>
+    <div class="iopt" data-grp="ft_row1" data-val="work-into-box"  onclick="setInstrFT('ft_row1','work-into-box')">Work into Box</div>
+    <div class="iopt" data-grp="ft_row2" data-val="run-at-defence" onclick="setInstrFT('ft_row2','run-at-defence')">Run at Defence</div>
+    <div class="iopt" data-grp="ft_row2" data-val="through-balls"  onclick="setInstrFT('ft_row2','through-balls')">Through Balls</div>
+  </div>
+</div>
+
+<!-- SHAPE VIEW TOGGLE -->
+
+<div class="view-toggle">
+  <div class="vtog active" data-v="START" onclick="setView('START')">⚽ Starting Shape</div>
+  <div class="vtog" data-v="IPF"   onclick="setView('IPF')">🟢 With the Ball</div>
+  <div class="vtog" data-v="OOPF"  onclick="setView('OOPF')">🟠 Without the Ball</div>
+</div>
+
+<!-- PITCH ZONE COLUMN LABELS -->
+
+<div class="col-labels">
+  <div>⚽ Attacking Third</div>
+  <div>Build-Up</div>
+  <div>Defensive Mid</div>
+  <div>🛡 Defensive Third</div>
+</div>
+
+<!-- PITCH GRID -->
+
+<div class="grid">
+  <!-- Top row -->
+  <div class="cell" id="z16"><span>16</span><div class="zone-dots" id="d16"></div><div class="zone-tip" id="t16">Zone 16 — Left flank attack</div></div>
+  <div class="cell" id="z11"><span>11</span><div class="zone-dots" id="d11"></div><div class="zone-tip" id="t11">Zone 11 — Left wide build-up</div></div>
+  <div class="cell" id="z6"><span>6</span><div class="zone-dots" id="d6"></div><div class="zone-tip" id="t6">Zone 6 — Left pre-defensive wide</div></div>
+  <div class="cell" id="z1"><span>1</span><div class="zone-dots" id="d1"></div><div class="zone-tip" id="t1">Zone 1 — Left defensive channel</div></div>
+  <!-- Middle row — penalty area sub-zones, halfspaces, pre-def mid, defensive box -->
+  <div class="sub-grid">
+    <div class="sub" id="z17a"><span>17a</span><div class="zone-dots" id="d17a"></div><div class="zone-tip" id="t17a">Zone 17a — Left pre-box channel</div></div>
+    <div class="sub" id="z17bc"><span>17b/c</span><div class="zone-dots" id="d17bc"></div><div class="zone-tip" id="t17bc">Zone 17b/c — Left wide box</div></div>
+    <div class="sub" id="z18a"><span>18a</span><div class="zone-dots" id="d18a"></div><div class="zone-tip" id="t18a">Zone 18a — Central pre-box</div></div>
+    <div class="sub" id="z18b"><span>18b</span><div class="zone-dots" id="d18b"></div><div class="zone-tip" id="t18b">Zone 18b — Six-yard box ⚡ highest xG</div></div>
+    <div class="sub" id="z19a"><span>19a</span><div class="zone-dots" id="d19a"></div><div class="zone-tip" id="t19a">Zone 19a — Right pre-box channel</div></div>
+    <div class="sub" id="z19bc"><span>19b/c</span><div class="zone-dots" id="d19bc"></div><div class="zone-tip" id="t19bc">Zone 19b/c — Right wide box</div></div>
+  </div>
+  <div class="sub-grid" style="grid-template-columns:100%;grid-template-rows:repeat(3,1fr);">
+    <div class="sub" id="z12"><span>12</span><div class="zone-dots" id="d12"></div><div class="zone-tip" id="t12">Zone 12 — Left halfspace ⚡ dangerous</div></div>
+    <div class="sub" id="z13"><span>13</span><div class="zone-dots" id="d13"></div><div class="zone-tip" id="t13">Zone 13 — Central build-up pivot</div></div>
+    <div class="sub" id="z14"><span>14</span><div class="zone-dots" id="d14"></div><div class="zone-tip" id="t14">Zone 14 — Right halfspace ⚡ dangerous</div></div>
+  </div>
+  <div class="sub-grid" style="grid-template-columns:100%;grid-template-rows:repeat(3,1fr);">
+    <div class="sub" id="z7"><span>7</span><div class="zone-dots" id="d7"></div><div class="zone-tip" id="t7">Zone 7 — Left defensive halfspace</div></div>
+    <div class="sub" id="z8"><span>8</span><div class="zone-dots" id="d8"></div><div class="zone-tip" id="t8">Zone 8 — Centre circle / DM pivot</div></div>
+    <div class="sub" id="z9"><span>9</span><div class="zone-dots" id="d9"></div><div class="zone-tip" id="t9">Zone 9 — Right defensive halfspace</div></div>
+  </div>
+  <div class="sub-grid" style="grid-template-columns:100%;grid-template-rows:repeat(3,1fr);">
+    <div class="sub" id="z2"><span>2</span><div class="zone-dots" id="d2"></div><div class="zone-tip" id="t2">Zone 2 — Left box channel / CB</div></div>
+    <div class="sub" id="z3"><span>3</span><div class="zone-dots" id="d3"></div><div class="zone-tip" id="t3">Zone 3 — GK territory</div></div>
+    <div class="sub" id="z4"><span>4</span><div class="zone-dots" id="d4"></div><div class="zone-tip" id="t4">Zone 4 — Right box channel / CB</div></div>
+  </div>
+  <!-- Bottom row -->
+  <div class="cell" id="z20"><span>20</span><div class="zone-dots" id="d20"></div><div class="zone-tip" id="t20">Zone 20 — Right flank attack</div></div>
+  <div class="cell" id="z15"><span>15</span><div class="zone-dots" id="d15"></div><div class="zone-tip" id="t15">Zone 15 — Right wide build-up</div></div>
+  <div class="cell" id="z10"><span>10</span><div class="zone-dots" id="d10"></div><div class="zone-tip" id="t10">Zone 10 — Right pre-defensive wide</div></div>
+  <div class="cell" id="z5"><span>5</span><div class="zone-dots" id="d5"></div><div class="zone-tip" id="t5">Zone 5 — Right defensive channel</div></div>
+</div>
+
+<!-- LEGEND -->
+
+<div class="legend">
+  <div class="leg"><div class="ls" style="background:#0d2a0d;border:1px solid #55cc77"></div>1 player</div>
+  <div class="leg"><div class="ls" style="background:#2a2200;border:1px solid #e8c84a"></div>2 players</div>
+  <div class="leg"><div class="ls" style="background:#2a0d0d;border:1px solid #ff6b6b"></div>Too crowded</div>
+  <div class="leg"><div class="ls" style="background:#111122;border:1px solid #334488"></div>No cover</div>
+  <div class="leg"><div class="ls" style="background:#0e0e0e;border:1px solid #222"></div>Empty</div>
+</div>
+
+<!-- ANALYSIS PANEL -->
+
+<div class="analysis" id="analysis">
+  <div class="empty-state" style="grid-column:1/-1">
+    Add at least 2 players, then pick a game plan to see your tactical analysis
+  </div>
+</div>
+
+<script>
+
+const COLORS = [
+  '#ff3333', // red
+  '#33aaff', // sky blue
+  '#ffcc00', // yellow
+  '#00dd77', // green
+  '#ff6600', // orange
+  '#cc44ff', // purple
+  '#00dddd', // cyan
+  '#ff44aa', // hot pink
+  '#88ff00', // lime
+  '#ffffff', // white
+  '#ff9944', // amber
+];
+
+const ALL_ZONES = [
+  'z1','z2','z3','z4','z5',
+  'z6','z7','z8','z9','z10',
+  'z11','z12','z13','z14','z15',
+  'z16','z17a','z17bc','z18a','z18b','z19a','z19bc','z20'
+];
+
+const L_ZONES = new Set(['z1','z2','z6','z7','z11','z12','z16','z17a','z17bc']);
+
+const R_ZONES = new Set(['z5','z4','z10','z9','z15','z14','z20','z19a','z19bc']);
+
+const MIRROR = {
+  'z1':'z5',    'z5':'z1',
+  'z2':'z4',    'z4':'z2',
+  'z6':'z10',   'z10':'z6',
+  'z7':'z9',    'z9':'z7',
+  'z11':'z15',  'z15':'z11',
+  'z12':'z14',  'z14':'z12',
+  'z16':'z20',  'z20':'z16',
+  'z17a':'z19a','z19a':'z17a',
+  'z17bc':'z19bc','z19bc':'z17bc',
+  
+  'z3':'z3','z8':'z8','z13':'z13','z18a':'z18a','z18b':'z18b',
+};
+
+const ZONE_COL = {
+  'z16':1,'z17a':1,'z17bc':1,'z18a':1,'z18b':1,'z19a':1,'z19bc':1,'z20':1,
+  'z11':2,'z12':2,'z13':2,'z14':2,'z15':2,
+  'z6':3, 'z7':3, 'z8':3, 'z9':3, 'z10':3,
+  'z1':4, 'z2':4, 'z3':4, 'z4':4, 'z5':4,
+};
+
+const COL_ZONES = {
+  1: ['z16','z17a','z17bc','z18a','z18b','z19a','z19bc','z20'],
+  2: ['z11','z12','z13','z14','z15'],
+  3: ['z6','z7','z8','z9','z10'],
+  4: ['z1','z2','z3','z4','z5'],
+};
+
+const ZONE_ROW = {
+  'z1':1, 'z6':1, 'z11':1, 'z16':1, 'z17a':1, 'z17bc':1,
+  'z2':2, 'z3':2, 'z4':2, 'z7':2, 'z8':2, 'z9':2,
+  'z12':2,'z13':2,'z14':2,'z18a':2,'z18b':2,
+  'z5':3, 'z10':3,'z15':3,'z20':3,'z19a':3,'z19bc':3,
+};
+
+const LANE_MAP = {
+  FL: ['z1','z16','z17a','z17bc'],           
+  LH: ['z2','z6','z7','z11','z12'],           
+  C:  ['z3','z8','z13','z18a','z18b'],        
+  RH: ['z4','z9','z10','z14','z19a'],         
+  FR: ['z5','z15','z19bc','z20'],             
+};
+
+const DEF_ZONES = new Set(['z1','z2','z3','z4','z5','z6','z7','z8','z9','z10']);
+
+const OFF_ZONES = new Set(['z16','z17a','z17bc','z18a','z18b','z19a','z19bc','z20']);
+
+const HS_ZONES  = new Set(['z7','z9','z12','z14','z17a','z19a']);
+
+const MENTALITY_CONFIG = {
+  Contain:   { ipfShift:0, oopfDrop:2,  oopfPress:-1 },
+  Defensive: { ipfShift:1, oopfDrop:1,  oopfPress:0  },
+  Counter:   { ipfShift:2, oopfDrop:1,  oopfPress:0  },
+  Control:   { ipfShift:1, oopfDrop:0,  oopfPress:0  },
+  Attacking: { ipfShift:2, oopfDrop:0,  oopfPress:1  },
+  Overload:  { ipfShift:3, oopfDrop:0,  oopfPress:2  },
+};
+
+const MENTALITY_DESC = {
+  Contain:   'Park the bus. Stay deep, don\'t lose. Shape barely changes whether you have the ball or not.',
+  Defensive: 'Hard to beat. Compact block, hit on the counter when you can.',
+  Counter:   'Absorb then explode. Tight shape defensively, direct and vertical when you win it.',
+  Control:   'We\'re in charge. Patient build-up, structured possession, press at mid-high.',
+  Attacking: 'Take the game to them. Most players push forward, accept some defensive risk.',
+  Overload:  'All in. Every player as far forward as possible. You will be exposed.',
+};
+
+const OOPF_ROLE_TYPE = {
+  'GK':'def',  'SK':'def',
+  'CB':'def',  'Wide CB':'def', 'BPD':'def', 'NCB':'def', 'Sweeper':'def', 'Libero':'def',
+  'FB':'def',  'WB':'def',      'IFB':'def', 'IWB':'def', 'DFB':'def',
+  'Defensive Winger':'def',
+  'DM':'def',  'Anchor':'def',  'DM (Mid)':'def', 'Anchor (Mid)':'def',
+  'DLP':'def', 'DLP (Deep)':'def',
+  'Wide Mid':'mid', 'BWM':'mid', 'BWM (Mid)':'mid', 'RPM':'mid', 'RPM (Deep)':'mid',
+  'BBM':'mid', 'BBM (Deep)':'mid', 'CM':'mid', 'AP':'mid',
+  'Winger':'mid', 'Inverted Winger':'mid',
+  'AM':'att',  'Shadow Striker':'att', 'Trequartista':'att',
+  'AP (Wing)':'att', 'Inside Forward':'att', 'Advanced Forward':'att', 'Pressing Forward':'att',
+  'Poacher':'att', 'Target Forward':'att', 'Deep Lying Forward':'att', 'Complete Forward':'att',
+};
+
+const MOBILITY = {
+  'GK':1,  'SK':1,
+  'CB':1,  'Wide CB':2, 'BPD':2,  'NCB':1,  'Sweeper':2, 'Libero':3,
+  'FB':2,  'WB':3,      'IFB':2,  'IWB':3,  'DFB':1,
+  'Winger':2, 'Inverted Winger':2, 'Wide Mid':3, 'Defensive Winger':1,
+  'DM':1,  'Anchor':1,  'DM (Mid)':1,  'Anchor (Mid)':1,
+  'DLP':2, 'DLP (Deep)':2,
+  'BBM':3, 'BBM (Deep)':3,
+  'RPM':3, 'RPM (Deep)':3,
+  'BWM':3, 'BWM (Mid)':3,
+  'CM':2,  'AP':2,
+  'AM':2,  'Shadow Striker':2, 'Trequartista':3,
+  'AP (Wing)':2, 'Inside Forward':2, 'Advanced Forward':2, 'Pressing Forward':3,
+  'Poacher':1, 'Target Forward':1, 'Deep Lying Forward':2, 'Complete Forward':3,
+};
+
+const OOPF_FLOOR = {
+  'GK':4,  'SK':4,
+  'CB':4,  'Wide CB':4, 'BPD':4, 'NCB':4, 'Sweeper':4, 'Libero':3,
+  'FB':4,  'WB':3,  'IFB':4, 'IWB':3, 'DFB':4,
+  'DM':3,  'Anchor':3, 'DM (Mid)':3, 'Anchor (Mid)':3,
+  'DLP (Deep)':3,
+  'Defensive Winger':3,
+  
+  'Wide Mid':3, 'BWM':3, 'BWM (Mid)':3,
+  'RPM':2,  'RPM (Deep)':2,
+  'BBM':2,  'BBM (Deep)':2,
+  'CM':2,   'AP':2, 'DLP':2,
+  'Winger':2, 'Inverted Winger':2,
+  
+  'AM':1, 'Shadow Striker':1, 'Trequartista':1,
+  'AP (Wing)':1, 'Inside Forward':1, 'Advanced Forward':1, 'Pressing Forward':1,
+  'Poacher':1, 'Target Forward':1, 'Deep Lying Forward':2, 'Complete Forward':1,
+};
+
+const IPF_CEILING = {
+  
+  'GK':4,  'SK':4,
+  
+  'CB':3,  'Wide CB':3, 'NCB':3, 'BPD':3, 'Sweeper':2, 'Libero':2,
+  'DFB':3,
+  
+  'FB':2, 'WB':1, 'IFB':2, 'IWB':2,
+  
+  'Winger':1, 'Inverted Winger':1, 'Wide Mid':2, 'Defensive Winger':3,
+  
+  'DM':3, 'Anchor':3, 'DM (Mid)':3, 'Anchor (Mid)':3,
+  'DLP':2, 'DLP (Deep)':3,
+  'BBM':1, 'BBM (Deep)':3,
+  'RPM':1, 'RPM (Deep)':3,
+  'BWM':2, 'BWM (Mid)':2,
+  'CM':2, 'AP':1,
+  
+  'AM':1, 'Shadow Striker':1, 'Trequartista':1,
+  'AP (Wing)':1, 'Inside Forward':1, 'Advanced Forward':1, 'Pressing Forward':1,
+  'Poacher':1, 'Target Forward':1, 'Deep Lying Forward':1, 'Complete Forward':1,
+};
+
+const MENTALITY_INTENSITY = {
+  Contain:0.4, Defensive:0.6, Counter:0.75, Control:0.7, Attacking:0.85, Overload:1.0
+};
+
+const DISCIPLINE = {
+  'GK':0.98,  'SK':0.92,
+  'CB':0.92,  'Wide CB':0.88, 'BPD':0.82,  'NCB':0.96,  'Sweeper':0.78, 'Libero':0.65,
+  'FB':0.85,  'WB':0.88,      'IFB':0.84,  'IWB':0.80,  'DFB':0.94,
+  'Winger':0.82, 'Inverted Winger':0.80, 'Wide Mid':0.88, 'Defensive Winger':0.92,
+  'DM':0.92,  'Anchor':0.97,  'DM (Mid)':0.90,  'Anchor (Mid)':0.95,
+  'DLP':0.88, 'DLP (Deep)':0.90,
+  'BBM':0.75, 'BBM (Deep)':0.78,
+  'RPM':0.68, 'RPM (Deep)':0.70,
+  'BWM':0.78, 'BWM (Mid)':0.76,
+  'CM':0.84,  'AP':0.76,
+  'AM':0.80,  'Shadow Striker':0.76, 'Trequartista':0.60,
+  'AP (Wing)':0.76, 'Inside Forward':0.78, 'Advanced Forward':0.82, 'Pressing Forward':0.72,
+  'Poacher':0.97, 'Target Forward':0.94, 'Deep Lying Forward':0.78, 'Complete Forward':0.72,
+};
+
+const SECTORS = {
+  "Goalkeeper": {
+    "GK": { home:['z3'], moves:[], okay:['z2'], sides:['C'] },
+    
+    "SK": { home:['z3'], moves:['z2','z1','z7','z8'], okay:[], sides:['C'] },
+  },
+  "Centre Back": {
+    
+    "CB":      { home:['z2'],     moves:['z7'],               okay:['z3'],             sides:['L','C','R'] },
+    "Wide CB": { home:['z2'],     moves:['z1','z7'],           okay:['z6'],             sides:['L','R'] },
+    "BPD":     { home:['z2'],     moves:['z7','z8'],           okay:['z3','z12'],       sides:['L','C','R'] },
+    "NCB":     { home:['z2'],     moves:['z7'],                okay:['z3'],             sides:['L','C','R'] },
+    "Sweeper": { home:['z3'],     moves:['z2','z7','z8'],      okay:['z12','z13'],      sides:['L','C','R'] },
+    "Libero":  { home:['z3'],     moves:['z2','z7','z8'],      okay:['z11','z12','z13'], sides:['L','C','R'] },
+  },
+  "Fullback": {
+    "FB":  { home:['z1','z2'],   moves:['z6','z11'],      okay:['z7'],        sides:['L','R'] },
+    "WB":  { home:['z1','z6'],   moves:['z11','z16'],     okay:['z17a'],      sides:['L','R'] },
+    "IFB": { home:['z1','z2'],   moves:['z7','z12'],      okay:['z8','z13'],  sides:['L','R'] },
+    "IWB": { home:['z1','z6'],   moves:['z12','z8','z13'],okay:['z11'],       sides:['L','R'] },
+    "DFB": { home:['z1','z2'],   moves:['z6'],            okay:['z7'],        sides:['L','R'] },
+  },
+  "Flanker": {
+    "Winger":           { home:['z11'], moves:['z16','z17a'],  okay:['z12'],      sides:['L','R'] },
+    "Inverted Winger":  { home:['z11'], moves:['z12','z17bc'], okay:['z8','z13'], sides:['L','R'] },
+    "Wide Mid":         { home:['z11'], moves:['z12','z6'],    okay:['z16','z7'], sides:['L','R'] },
+    "Defensive Winger": { home:['z6'],  moves:['z11','z1'],    okay:['z7'],       sides:['L','R'] },
+  },
+  "Flanker Def Mid": {
+    
+    "WB":  { home:['z6'],  moves:['z11','z16'],  okay:['z17a'],        sides:['L','R'] },
+    
+    "IWB": { home:['z6'],  moves:['z7','z12'],   okay:['z8','z13'],    sides:['L','R'] },
+  },
+  "DM": {
+    "DM":         { home:['z8'], moves:['z7'],             okay:['z2','z6','z11'],  sides:['L','C','R'] },
+    "Anchor":     { home:['z8'], moves:['z7'],             okay:['z6','z11'],       sides:['L','C','R'] },
+    "DLP (Deep)": { home:['z8'], moves:['z7'],             okay:['z13','z12','z6','z11'], sides:['L','C','R'] },
+    "BBM (Deep)": { home:['z8'], moves:['z7'],       okay:['z12','z2','z6','z11'],  sides:['L','C','R'] },
+    "RPM (Deep)": { home:['z8'], moves:['z7','z13','z12'], okay:['z6','z11'],       sides:['L','C','R'] },
+    "BWM":        { home:['z8'], moves:['z7','z6','z11'],  okay:['z2'],             sides:['L','C','R'] },
+  },
+  "Central Mid": {
+    "CM":         { home:['z12','z13'], moves:['z11','z8'],      okay:['z7','z17a','z6'],          sides:['L','C','R'] },
+    "AP":         { home:['z13','z12'], moves:['z17a','z17bc'],  okay:['z18a','z6','z11'],         sides:['L','C','R'] },
+    "DLP":        { home:['z8','z13'],  moves:['z7'],            okay:['z12','z6','z11'],          sides:['L','C','R'] },
+    "BBM":        { home:['z12','z13'], moves:['z17a','z7'],     okay:['z18a','z2','z6','z11'],    sides:['L','C','R'] },
+    "DM (Mid)":   { home:['z8','z13'],  moves:['z7','z12'],      okay:['z6','z11'],                sides:['L','C','R'] },
+    "RPM":        { home:['z12','z13'], moves:['z17a','z11'],    okay:['z16','z18a','z6'],         sides:['L','C','R'] },
+    "Anchor (Mid)":{ home:['z8','z13'], moves:['z7'],            okay:['z6','z11'],                sides:['L','C','R'] },
+    "BWM (Mid)":  { home:['z12','z13'], moves:['z7','z6','z11'], okay:[],                          sides:['L','C','R'] },
+  },
+  "Wing Attack": {
+    "Winger":          { home:['z16'], moves:['z17a'],            okay:['z11','z12'],       sides:['L','R'] },
+    "Inverted Winger": { home:['z16'], moves:['z17a','z17bc'],    okay:['z18a','z12'],      sides:['L','R'] },
+    "Inside Forward":  { home:['z16'], moves:['z17bc','z18b'],    okay:['z18a','z17a','z12'], sides:['L','R'] },
+    "AP (Wing)":       { home:['z16'], moves:['z17a','z12'],      okay:['z17bc','z18a'],    sides:['L','R'] },
+  },
+  "Central Attack": {
+    
+    "AM":             { home:['z17a','z18a'], moves:['z17bc','z18b'],      okay:['z12','z13'],    sides:['L','C','R'] },
+    "AP":             { home:['z17a','z18a'], moves:['z12','z13'],          okay:['z17bc','z18b','z11'], sides:['L','C','R'] },
+    "Shadow Striker": { home:['z17a','z18a'], moves:['z17bc','z18b'],      okay:['z12','z13'],    sides:['L','C','R'] },
+    "Trequartista":   { home:['z17a','z18a'], moves:['z11','z12','z13','z17bc'], okay:['z18b'],   sides:['L','C','R'] },
+  },
+  "Wide Striker": {
+    "Inside Forward":   { home:['z17bc'], moves:['z18b','z17a'],  okay:['z16','z12'], sides:['L','R'] },
+    "Advanced Forward": { home:['z17bc'], moves:['z18b','z16'],   okay:['z17a'],      sides:['L','R'] },
+    "Pressing Forward": { home:['z17bc'], moves:['z16','z11'],    okay:['z17a','z12'], sides:['L','R'] },
+  },
+  "Central Striker": {
+    
+    "Poacher":            { home:['z18b'],      moves:['z17bc'],                   okay:[],                   sides:['L','C','R'] },
+    "Advanced Forward":   { home:['z17bc','z18b'], moves:['z16'],                  okay:['z17a'],             sides:['L','C','R'] },
+    "Pressing Forward":   { home:['z17a','z18a'], moves:['z12','z13','z7','z8'],   okay:['z17bc','z18b'],     sides:['L','C','R'] },
+    "Target Forward":     { home:['z18b'],      moves:['z17bc','z17a'],            okay:['z13'],              sides:['L','C','R'] },
+    "Trequartista":       { home:['z17a','z18a'], moves:['z11','z12','z13'],       okay:['z17bc','z18b'],     sides:['L','C','R'] },
+    "Deep Lying Forward": { home:['z17a','z18a'], moves:['z12','z13'],             okay:['z11','z17bc','z18b'], sides:['L','C','R'] },
+    "Complete Forward":   { home:['z17bc','z18b'], moves:['z16','z17a'],           okay:['z12'],              sides:['L','C','R'] },
+  },
+};
+
+let activeRoles   = [];
+let colorIdx      = 0;
+let currentMentality = null;
+let currentView   = 'START';
+
+const PRESETS = {
+  '4-4-2': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['Flanker','Wide Mid','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Flanker','Wide Mid','R'],
+    ['Central Striker','Advanced Forward','L'],['Central Striker','Advanced Forward','R'],
+  ],
+  '4-4-2 Diamond': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['DM','DM','C'],['Central Mid','CM','L'],['Central Mid','CM','R'],
+    ['Central Attack','AP','C'],
+    ['Central Striker','Advanced Forward','L'],['Central Striker','Advanced Forward','R'],
+  ],
+  '4-3-3': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['Central Mid','CM','L'],['DM','Anchor','C'],['Central Mid','CM','R'],
+    ['Wing Attack','Winger','L'],['Central Striker','Complete Forward','C'],['Wing Attack','Winger','R'],
+  ],
+  '4-2-3-1': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['DM','DM','L'],['DM','DM','R'],
+    ['Wing Attack','Winger','L'],['Central Attack','AM','C'],['Wing Attack','Winger','R'],
+    ['Central Striker','Advanced Forward','C'],
+  ],
+  '4-1-4-1': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','FB','L'],['Centre Back','CB','L'],['Centre Back','CB','R'],['Fullback','FB','R'],
+    ['DM','Anchor','C'],
+    ['Flanker','Wide Mid','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Flanker','Wide Mid','R'],
+    ['Central Striker','Deep Lying Forward','C'],
+  ],
+  '3-5-2': [
+    ['Goalkeeper','GK','C'],
+    ['Centre Back','Wide CB','L'],['Centre Back','CB','C'],['Centre Back','Wide CB','R'],
+    ['Fullback','WB','L'],['Central Mid','CM','L'],['DM','Anchor','C'],['Central Mid','CM','R'],['Fullback','WB','R'],
+    ['Central Striker','Advanced Forward','L'],['Central Striker','Advanced Forward','R'],
+  ],
+  '3-4-3': [
+    ['Goalkeeper','GK','C'],
+    ['Centre Back','Wide CB','L'],['Centre Back','CB','C'],['Centre Back','Wide CB','R'],
+    ['Fullback','WB','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Fullback','WB','R'],
+    ['Wing Attack','Winger','L'],['Central Striker','Complete Forward','C'],['Wing Attack','Winger','R'],
+  ],
+  '3-4-2-1': [
+    ['Goalkeeper','GK','C'],
+    ['Centre Back','Wide CB','L'],['Centre Back','CB','C'],['Centre Back','Wide CB','R'],
+    ['Fullback','WB','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Fullback','WB','R'],
+    ['Central Attack','Shadow Striker','L'],['Central Attack','Shadow Striker','R'],
+    ['Central Striker','Advanced Forward','C'],
+  ],
+  '3-3-3-1': [
+    ['Goalkeeper','GK','C'],
+    ['Centre Back','Wide CB','L'],['Centre Back','CB','C'],['Centre Back','Wide CB','R'],
+    ['Central Mid','CM','L'],['DM','DM','C'],['Central Mid','CM','R'],
+    ['Wing Attack','Inside Forward','L'],['Central Attack','AM','C'],['Wing Attack','Inside Forward','R'],
+    ['Central Striker','Advanced Forward','C'],
+  ],
+  '5-3-2': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','WB','L'],['Centre Back','CB','L'],['Centre Back','CB','C'],['Centre Back','CB','R'],['Fullback','WB','R'],
+    ['Central Mid','CM','L'],['DM','Anchor','C'],['Central Mid','CM','R'],
+    ['Central Striker','Advanced Forward','L'],['Central Striker','Advanced Forward','R'],
+  ],
+  '5-4-1': [
+    ['Goalkeeper','GK','C'],
+    ['Fullback','WB','L'],['Centre Back','CB','L'],['Centre Back','CB','C'],['Centre Back','CB','R'],['Fullback','WB','R'],
+    ['Flanker','Wide Mid','L'],['Central Mid','CM','L'],['Central Mid','CM','R'],['Flanker','Wide Mid','R'],
+    ['Central Striker','Deep Lying Forward','C'],
+  ],
+};
+
+
+function zoneLane(z) {
+  if(L_ZONES.has(z)) return 'L';
+  if(R_ZONES.has(z)) return 'R';
+  return 'C';
+}
+
+function isCenter(z) {
+  return !L_ZONES.has(z) && !R_ZONES.has(z);
+}
+
+function getRoleZones(r) {
+  return [...new Set([...r.home, ...r.moves])];
+}
+
+function getRoleZonesFull(r) {
+  return [...new Set([...r.home, ...r.moves, ...(r.okay || [])])];
+}
+
+function applySlot(zones, side) {
+  if(side === 'L') return zones;
+  if(side === 'R') return zones.map(z => MIRROR[z] || z);
+  
+  const expanded = new Set();
+  zones.forEach(z => {
+    expanded.add(z);
+    const m = MIRROR[z];
+    if(m && m !== z) expanded.add(m);
+  });
+  return [...expanded];
+}
+
+function isHalfSpace(z) {
+  return z === 'z7' || z === 'z9' || z === 'z12' || z === 'z14';
+}
+
+const ROLE_LANE_BEHAVIOR = {
+  'WB':'wide_locked',   'Defensive Winger':'wide_locked',
+  'Wide CB':'halfspace', 'IWB':'halfspace',
+  'FB':'free',          'DFB':'free',
+  'Winger':'free',      'Inverted Winger':'halfspace',
+  'Wide Mid':'free',    'Inside Forward':'halfspace',
+  'AP (Wing)':'halfspace',
+  'Anchor':'center_locked', 'DM':'center_locked', 'DM (Mid)':'center_locked',
+  'Anchor (Mid)':'center_locked',
+  
+  'CB':'halfspace', 'BPD':'halfspace', 'NCB':'halfspace',
+};
+
+function shiftZone(z, cols, roleName, view, roleSide) {
+  const col = ZONE_COL[z];
+  if(!col) return z;
+
+  
+  let newCol = col - cols;
+  newCol = Math.max(1, Math.min(4, newCol));
+
+  if(view === 'OOPF') {
+    const floor = OOPF_FLOOR[roleName];
+    if(floor !== undefined) newCol = Math.max(newCol, floor);
+  }
+
+  if(view === 'IPF') {
+    const ceiling = IPF_CEILING[roleName];
+    if(ceiling !== undefined) newCol = Math.max(newCol, ceiling);
+  }
+
+  if(newCol === col) return z;
+
+  let targetFilter;
+  const behavior = ROLE_LANE_BEHAVIOR[roleName];
+
+  // Width instruction expands or contracts lane eligibility
+  // Wide: wide_locked roles can also use halfspace, free roles get full lane access
+  // Narrow: wide roles are nudged toward halfspace/centre
+  const wideInstr   = instrState.width === 'wide';
+  const narrowInstr = instrState.width === 'narrow';
+
+  if(roleSide === 'L') {
+    if(behavior === 'wide_locked')
+      targetFilter = wideInstr
+        ? nz => L_ZONES.has(nz) || isHalfSpace(nz)   // wide: stretch into halfspace too
+        : narrowInstr
+          ? nz => isHalfSpace(nz) || isCenter(nz)     // narrow: tuck inside
+          : nz => L_ZONES.has(nz);
+    else if(behavior === 'halfspace')
+      targetFilter = narrowInstr
+        ? nz => isCenter(nz)                          // narrow: tuck to centre
+        : nz => L_ZONES.has(nz) || isHalfSpace(nz);
+    else if(behavior === 'center_locked') targetFilter = nz => isCenter(nz);
+    else targetFilter = wideInstr
+      ? nz => L_ZONES.has(nz) || isHalfSpace(nz) || isCenter(nz)
+      : nz => L_ZONES.has(nz) || isCenter(nz);
+  } else if(roleSide === 'R') {
+    if(behavior === 'wide_locked')
+      targetFilter = wideInstr
+        ? nz => R_ZONES.has(nz) || isHalfSpace(nz)
+        : narrowInstr
+          ? nz => isHalfSpace(nz) || isCenter(nz)
+          : nz => R_ZONES.has(nz);
+    else if(behavior === 'halfspace')
+      targetFilter = narrowInstr
+        ? nz => isCenter(nz)
+        : nz => R_ZONES.has(nz) || isHalfSpace(nz);
+    else if(behavior === 'center_locked') targetFilter = nz => isCenter(nz);
+    else targetFilter = wideInstr
+      ? nz => R_ZONES.has(nz) || isHalfSpace(nz) || isCenter(nz)
+      : nz => R_ZONES.has(nz) || isCenter(nz);
+  } else {
+    if(L_ZONES.has(z))      targetFilter = nz => L_ZONES.has(nz);
+    else if(R_ZONES.has(z)) targetFilter = nz => R_ZONES.has(nz);
+    else                    targetFilter = nz => isCenter(nz);
+  }
+
+  const candidates = COL_ZONES[newCol].filter(targetFilter);
+  if(candidates.length === 0) return z;
+  if(candidates.length === 1) return candidates[0];
+
+  // Prefer the candidate that best preserves the zone's own lane character
+  // Wide zone → prefer wide candidate, halfspace → prefer halfspace, centre → prefer centre
+  const zIsWide   = (L_ZONES.has(z) && !isHalfSpace(z)) || (R_ZONES.has(z) && !isHalfSpace(z));
+  const zIsHalf   = isHalfSpace(z);
+  const zIsCentre = isCenter(z);
+
+  const preferred = candidates.find(nz => {
+    if(zIsWide)   return (L_ZONES.has(nz) || R_ZONES.has(nz)) && !isHalfSpace(nz);
+    if(zIsHalf)   return isHalfSpace(nz);
+    if(zIsCentre) return isCenter(nz);
+    return false;
+  });
+
+  return preferred || candidates[0];
+}
+
+function getShiftedZones(role, shiftCols, view) {
+  const mobility = MOBILITY[role.role] || 2;
+  let actualShift;
+
+  if(view === 'OOPF') {
+    const cfg  = MENTALITY_CONFIG[currentMentality] || { oopfDrop:1, oopfPress:0 };
+    const type = OOPF_ROLE_TYPE[role.role] || 'mid';
+    if(type === 'def')      actualShift = -Math.round(cfg.oopfDrop * (mobility / 3));
+    else if(type === 'att') actualShift =  Math.round(cfg.oopfPress * (mobility / 3));
+    else                    actualShift = -Math.round((cfg.oopfDrop * 0.4) * (mobility / 3));
+
+    // ── Instruction modifiers on OOPF ──────────────────────
+    // Defensive Line: High = defenders push up (lower floor = more forward)
+    //                 Deep = defenders stay deeper (raise floor)
+    if(instrState.dline === 'high' && type === 'def')   actualShift += 1;
+    if(instrState.dline === 'deep' && type === 'def')   actualShift -= 1;
+
+    // Closing Down: All Over = everyone presses higher on OOPF
+    //               Sit Back = everyone drops deeper
+    if(instrState.closing === 'allover') actualShift += (type === 'def' ? 0 : 1);
+    if(instrState.closing === 'sit')     actualShift -= (type === 'att' ? 0 : 1);
+
+  } else {
+    // IPF shift base from mentality
+    let ipfBase = shiftCols;
+
+    // ── Instruction modifiers on IPF ───────────────────────
+    // Passing Direct/Long = players push further forward (more aggressive IPF)
+    if(instrState.passing === 'direct' || instrState.passing === 'long')  ipfBase += 0.5;
+    // Passing Short = slower build-up, less aggressive IPF push
+    if(instrState.passing === 'short') ipfBase -= 0.5;
+
+    actualShift = Math.round(ipfBase * (mobility / 3));
+  }
+
+  const side = role.side;
+  const sideOk = z => {
+    if(side === 'L') return L_ZONES.has(z) || isCenter(z);
+    if(side === 'R') return R_ZONES.has(z) || isCenter(z);
+    return true;
+  };
+
+  const baseZones    = getRoleZones(role).filter(sideOk);
+  const filteredHome = role.home.filter(sideOk);
+  const shifted      = baseZones.map(z => shiftZone(z, actualShift, role.role, view, side));
+  return [...new Set([...filteredHome, ...shifted])];
+}
+
+function getDisplayZones() {
+  const sideOk = (z, side) => {
+    if(side === 'L') return L_ZONES.has(z) || isCenter(z);
+    if(side === 'R') return R_ZONES.has(z) || isCenter(z);
+    return true;
+  };
+
+  if(currentView === 'START' || !currentMentality)
+    return activeRoles.map(r => ({ r, zones: getRoleZones(r).filter(z => sideOk(z, r.side)) }));
+  const cfg = MENTALITY_CONFIG[currentMentality] || { ipfShift:1, oopfDrop:1, oopfPress:0 };
+  if(currentView === 'OOPF')
+    return activeRoles.map(r => ({ r, zones: getShiftedZones(r, 0, 'OOPF') }));
+  return activeRoles.map(r => ({ r, zones: getShiftedZones(r, cfg.ipfShift, 'IPF') }));
+}
+
+function calcLikelihood(role, view) {
+  if(!currentMentality || view === 'START') return null;
+  const mobility    = MOBILITY[role.role]   || 2;
+  const intensity   = MENTALITY_INTENSITY[currentMentality] || 0.6;
+  const discipline  = DISCIPLINE[role.role] || 0.80;
+  const cfg = MENTALITY_CONFIG[currentMentality] || { ipfShift:1, oopfDrop:1, oopfPress:0 };
+
+  let actualShift;
+  if(view === 'OOPF') {
+    const type = OOPF_ROLE_TYPE[role.role] || 'mid';
+    if(type === 'def')      actualShift = -Math.round(cfg.oopfDrop   * (mobility/3));
+    else if(type === 'att') actualShift =  Math.round(cfg.oopfPress  * (mobility/3));
+    else                    actualShift = -Math.round((cfg.oopfDrop * 0.4) * (mobility/3));
+  } else {
+    actualShift = Math.round(cfg.ipfShift * (mobility/3));
+  }
+
+  
+  if(mobility === 1) return Math.min(97, Math.round(80 + discipline * 17));
+  
+  if(actualShift === 0) return Math.min(97, Math.round(72 + discipline * 25));
+
+  const mobilityFactor = 0.5 + (mobility / 3) * 0.5;
+  const shiftPenalty   = Math.max(0, (Math.abs(actualShift) - 1) * 0.07);
+  const raw = discipline * intensity * mobilityFactor * (1 - shiftPenalty);
+  return Math.min(95, Math.max(25, Math.round(raw * 100)));
+}
+
+function likelihoodColor(pct) {
+  if(pct >= 70) return '#55cc77';
+  if(pct >= 45) return '#e8c84a';
+  return '#ff8855';
+}
+
+function getSideCounts(zoneRoles) {
+  const leftZones  = ['z16','z11','z6','z1','z17a','z17bc','z18a','z19a'];
+  const rightZones = ['z20','z15','z10','z5','z19a','z19bc','z18a','z17a'];
+  let left = 0, right = 0;
+  leftZones.forEach(z  => left  += zoneRoles[z]?.length || 0);
+  rightZones.forEach(z => right += zoneRoles[z]?.length || 0);
+  return { left, right };
+}
+
+function countColumn(zoneRoles, colZones) {
+  return colZones.reduce((sum, z) => sum + (zoneRoles[z]?.length || 0), 0);
+}
+
+function hasEffectiveWidth(zoneRoles) {
+  const leftWide  = ['z16','z17a','z17bc','z18a','z19a','z20'];
+  const rightWide = ['z1','z2','z3','z4','z5'];
+  const left  = leftWide.some(z  => (zoneRoles[z]?.length || 0) > 0);
+  const right = rightWide.some(z => (zoneRoles[z]?.length || 0) > 0);
+  return left && right;
+}
+
+function capLane(zoneRoles, laneZones, max = 2) {
+  const count = laneZones.reduce((s, z) => s + (zoneRoles[z]?.length || 0), 0);
+  return count > max;
+}
+
+// ── Back 3/5 detection ───────────────────────────────────────
+// Counts roles whose home zones are all in the defensive third
+const CB_ROLES = new Set(['CB','Wide CB','BPD','NCB','Sweeper','Libero']);
+const FLANK_ZONES = new Set(['z1','z5','z6','z10','z11','z15','z16','z20','z17a','z17bc','z19a','z19bc']);
+
+function detectBackLine() {
+  const defRoles = activeRoles.filter(r => CB_ROLES.has(r.role));
+  return defRoles.length; // 2=back2, 3=back3, 4=back4 etc
+}
+
+function runPositionalAudit(displayZonesList, view) {
+  const issues = [];
+  const passes = [];
+  const backLine = detectBackLine();
+  const isBack35 = backLine === 3 || backLine === 5;
+
+  const COL_N  = {1:'Attacking',2:'Build-Up',3:'Mid-Block',4:'Defensive'};
+  const LANE_N = {L:'Left', C:'Centre', R:'Right'};
+  const ROW_N  = {1:'Top', 2:'Middle', 3:'Bottom'};
+  const LANE_LABELS = { FL:'Far Left', LH:'Left Half-space', C:'Centre', RH:'Right Half-space', FR:'Far Right' };
+
+  const nonGK = displayZonesList.filter(({r}) => r.role !== 'GK' && r.role !== 'SK');
+  const zoneRoles = {};
+  ALL_ZONES.forEach(z => zoneRoles[z] = []);
+  nonGK.forEach(({r, zones}) => zones.forEach(z => { if(zoneRoles[z]) zoneRoles[z].push(r); }));
+
+  // ── Show which ruleset is active ─────────────────────────────
+  if(isBack35) {
+    passes.push(`📐 Back ${backLine} detected — using elasticity rules instead of positional play`);
+  }
+
+  // ── Rule 1: Lane crowding — relaxed for back 3/5 ─────────────
+  if(!isBack35) {
+    const laneCounts = {};
+    nonGK.forEach(({r, zones}) => {
+      const seen = new Set();
+      zones.forEach(z => {
+        const key = `${ZONE_COL[z]}-${zoneLane(z)}`;
+        if(!seen.has(key)) { seen.add(key); if(!laneCounts[key]) laneCounts[key] = []; laneCounts[key].push(r); }
+      });
+    });
+    const laneViolations = Object.entries(laneCounts).filter(([,roles]) => roles.length > 2);
+    if(laneViolations.length > 0) {
+      laneViolations.forEach(([key, roles]) => {
+        const [col, lane] = key.split('-');
+        issues.push(`⚠️ ${LANE_N[lane]} ${COL_N[col]} — ${roles.length} players in the same corridor. Max is 2.`);
+      });
+    } else {
+      passes.push('✅ No corridor is too crowded (max 2 per lane)');
+    }
+  }
+
+  // ── Rule 2: Width in attack — IPF only ───────────────────────
+  if(view === 'IPF') {
+    if(!isBack35) {
+      // Pep rule: all 5 lanes occupied
+      const emptyLanes = Object.entries(LANE_MAP)
+        .filter(([, zones]) => zones.every(z => (zoneRoles[z]?.length || 0) === 0))
+        .map(([l]) => LANE_LABELS[l]);
+      if(emptyLanes.length > 0) {
+        issues.push(`⚠️ Nobody covering: ${emptyLanes.join(', ')}. Use all 5 lanes to stretch the opposition.`);
+      } else {
+        passes.push('✅ All 5 width lanes are being used');
+      }
+    } else {
+      // Back 3/5 rule: at least one flank zone occupied each side
+      const lFlank = ['z1','z11','z16','z17a','z17bc'].some(z => (zoneRoles[z]?.length || 0) > 0);
+      const rFlank = ['z5','z15','z20','z19a','z19bc'].some(z => (zoneRoles[z]?.length || 0) > 0);
+      if(!lFlank) issues.push('⚠️ Left flank empty in attack — width is everything in a back 3. Someone needs to be out there.');
+      if(!rFlank) issues.push('⚠️ Right flank empty in attack — width is everything in a back 3. Someone needs to be out there.');
+      if(lFlank && rFlank) passes.push('✅ Both flanks occupied in attack — width maintained');
+    }
+  }
+
+  // ── Back 3/5 exclusive: Flank Elasticity check ───────────────
+  // Any role in a flank zone on IPF must ALSO cover a flank zone on OOPF
+  if(isBack35 && currentMentality) {
+    const cfg = MENTALITY_CONFIG[currentMentality] || { ipfShift:1, oopfDrop:1, oopfPress:0 };
+    const ipfList  = activeRoles.map(r => ({ r, zones: getShiftedZones(r, cfg.ipfShift, 'IPF') }));
+    const oopfList = activeRoles.map(r => ({ r, zones: getShiftedZones(r, 0, 'OOPF') }));
+    const oopfFlankRoles = new Set(
+      oopfList.filter(({zones}) => zones.some(z => FLANK_ZONES.has(z))).map(({r}) => r.role+'|'+r.side)
+    );
+    const brokenElasticity = ipfList.filter(({r, zones}) =>
+      zones.some(z => FLANK_ZONES.has(z)) && !oopfFlankRoles.has(r.role+'|'+r.side)
+    );
+    if(brokenElasticity.length > 0) {
+      brokenElasticity.forEach(({r}) => {
+        issues.push(`⚠️ ${r.role} (${r.side}) is in a flank zone when attacking but drops away from the flank when defending — elasticity broken. They need to track back wide.`);
+      });
+    } else {
+      passes.push('✅ Flank elasticity intact — wide players covering both attack and defensive flank zones');
+    }
+  }
+
+  // ── Rule 3: Vertical depth ────────────────────────────────────
+  const rowOcc = {1:false, 2:false, 3:false};
+  nonGK.forEach(({zones}) => zones.forEach(z => { if(ZONE_ROW[z]) rowOcc[ZONE_ROW[z]] = true; }));
+  const emptyRows = Object.entries(rowOcc).filter(([,v]) => !v).map(([r]) => ROW_N[r]);
+  if(emptyRows.length > 0) {
+    issues.push(`⚠️ Shape is flat — no one in the ${emptyRows.join(', ')} line. You need depth or you'll get pressed easily.`);
+  } else {
+    passes.push('✅ Players spread across all 3 depth lines — good stagger');
+  }
+
+  // ── Rule 4: Rest defence ─────────────────────────────────────
+  const minDef = isBack35 ? (view === 'OOPF' ? 4 : 3) : (view === 'OOPF' ? 3 : 2);
+  const defPlayers = nonGK.filter(({zones}) => zones.some(z => DEF_ZONES.has(z)));
+  if(defPlayers.length < minDef) {
+    issues.push(`⚠️ Only ${defPlayers.length} player(s) staying back — need at least ${minDef}${isBack35 ? ' (back 3 rule)' : ''}. Counter risk is huge.`);
+  } else {
+    passes.push(`✅ ${defPlayers.length} players behind the ball — ${isBack35 ? 'back line covered' : 'defence not exposed'}`);
+  }
+
+  // ── Rule 5: No zone overcrowding ─────────────────────────────
+  const crowdedZones = ALL_ZONES.filter(z => (zoneRoles[z]?.length || 0) >= 3);
+  if(crowdedZones.length > 0) {
+    crowdedZones.forEach(z => {
+      const names = (zoneRoles[z]||[]).map(r => r.role+'('+r.side+')').join(', ');
+      issues.push(`⚠️ Zone ${z.replace('z','')} — ${names}. That's a traffic jam.`);
+    });
+  } else {
+    passes.push('✅ No zone has 3+ players stacking in it');
+  }
+
+  // ── Rule 6: Flank width — IPF ────────────────────────────────
+  if(view === 'IPF' && !isBack35) {
+    const lCov = ['z16','z11','z6','z1'].some(z => (zoneRoles[z]?.length || 0) > 0);
+    const rCov = ['z20','z15','z10','z5'].some(z => (zoneRoles[z]?.length || 0) > 0);
+    if(!lCov && !rCov) issues.push('⚠️ Both flanks empty — zero width. Pack the middle and stop you easily.');
+    else if(!lCov) issues.push('⚠️ Nobody on the left flank — no width on that side.');
+    else if(!rCov) issues.push('⚠️ Nobody on the right flank — no width on that side.');
+    else passes.push('✅ Both flanks covered — width to stretch the opposition');
+  }
+
+  // ── Rule 7: Halfspaces ────────────────────────────────────────
+  const hsOcc = ['z7','z9','z12','z14'].some(z => (zoneRoles[z]?.length || 0) > 0);
+  if(!hsOcc) {
+    issues.push('⚠️ No one in the halfspaces (zones 7, 9, 12, 14) — these are the most dangerous areas on the pitch. Always need someone there.');
+  } else {
+    passes.push('✅ Halfspaces occupied — most dangerous zones covered');
+  }
+
+  // ── Rule 8: Side balance ─────────────────────────────────────
+  const { left: sideL, right: sideR } = getSideCounts(zoneRoles);
+  if(Math.abs(sideL - sideR) >= 2) {
+    issues.push(`⚠️ Lopsided — left has ${sideL} players, right has ${sideR}. One side doing too much.`);
+  } else {
+    passes.push(`✅ Left and right roughly balanced (L:${sideL} R:${sideR})`);
+  }
+
+  // ── Rule 9: Central overload ──────────────────────────────────
+  const midCol = countColumn(zoneRoles, COL_ZONES[3]);
+  if(midCol >= 5) {
+    issues.push(`❌ ${midCol} players in the defensive mid column — too compressed. Give them space.`);
+  }
+
+  // ── Rule 10: Progression lanes ────────────────────────────────
+  const hasLeftProg  = ['z11','z6'].some(z => (zoneRoles[z]?.length || 0) > 0);
+  const hasRightProg = ['z10','z15'].some(z => (zoneRoles[z]?.length || 0) > 0);
+  if(!hasLeftProg)  issues.push('❌ Left side has no one to carry the ball forward (zones 6 and 11 both empty)');
+  if(!hasRightProg) issues.push('❌ Right side has no one to carry the ball forward (zones 10 and 15 both empty)');
+  if(hasLeftProg && hasRightProg) passes.push('✅ Both sides can progress the ball forward');
+
+  // ── Back 3/5 exclusive: CB shuffle check ─────────────────────
+  if(isBack35 && view === 'OOPF') {
+    const wideDefZones = new Set(['z1','z5','z6','z10']);
+    const wideDefCovered = [...wideDefZones].some(z => (zoneRoles[z]?.length || 0) > 0);
+    if(!wideDefCovered) {
+      issues.push('⚠️ No one covering the wide defensive channels (zones 1, 5, 6, 10) — in a back 3, a wide CB or dropping winger needs to cover these when defending.');
+    } else {
+      passes.push('✅ Wide defensive channels covered — CB shuffle or wide cover in place');
+    }
+  }
+
+  return { issues, passes };
+}
+
+const secEl  = document.getElementById('sel-sector');
+const roleEl = document.getElementById('sel-role');
+const sideEl = document.getElementById('sel-side');
+
+Object.keys(SECTORS).forEach(s => {
+  const o = document.createElement('option');
+  o.value = s; o.textContent = s; secEl.appendChild(o);
+});
+
+secEl.addEventListener('change', () => {
+  roleEl.innerHTML = '<option value="">Role</option>';
+  sideEl.innerHTML = '<option value="">Side</option>';
+  const s = secEl.value;
+  if(s && SECTORS[s]) {
+    Object.keys(SECTORS[s]).forEach(r => {
+      const o = document.createElement('option');
+      o.value = r; o.textContent = r; roleEl.appendChild(o);
+    });
+  }
+});
+
+roleEl.addEventListener('change', () => {
+  sideEl.innerHTML = '<option value="">Side</option>';
+  const s = secEl.value; const r = roleEl.value;
+  if(s && r && SECTORS[s]?.[r]) {
+    SECTORS[s][r].sides.forEach(side => {
+      const o = document.createElement('option');
+      o.value = side;
+      o.textContent = side === 'L' ? 'Left' : side === 'R' ? 'Right' : 'Centre';
+      sideEl.appendChild(o);
+    });
+    if(SECTORS[s][r].sides.length === 1) sideEl.value = SECTORS[s][r].sides[0];
+  }
+});
+
+function addRole() {
+  const s = secEl.value; const r = roleEl.value; const side = sideEl.value;
+  if(!s || !r || !side) { alert('Pick a position group, role and side first'); return; }
+  if(activeRoles.length >= 11) { alert('Maximum 11 players'); return; }
+  if(activeRoles.find(x => x.sector===s && x.role===r && x.side===side)) {
+    alert(`${r} (${side==='L'?'Left':side==='R'?'Right':'Centre'}) is already in your lineup`);
+    return;
+  }
+  const data  = SECTORS[s][r];
+  const color = COLORS[colorIdx % COLORS.length]; colorIdx++;
+  activeRoles.push({
+    sector:s, role:r, side, color,
+    home:  applySlot(data.home,  side),
+    moves: applySlot(data.moves, side),
+    okay:  applySlot(data.okay,  side),
+  });
+  renderAll();
+}
+
+function removeRole(idx) { activeRoles.splice(idx, 1); renderAll(); }
+
+function clearAll() { activeRoles = []; colorIdx = 0; renderAll(); }
+
+function setMentality(m) {
+  currentMentality = m;
+  syncButtons();
+  document.getElementById('men-desc').textContent = MENTALITY_DESC[m] || '';
+  renderAll();
+}
+
+function setView(v) {
+  currentView = v;
+  syncButtons();
+  renderAll();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SAVE / LOAD — persists lineups in localStorage
+// ═══════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  document.getElementById('tab-preset').style.display = tab==='preset' ? 'block' : 'none';
+  document.getElementById('tab-manual-btn').classList.toggle('active', tab==='manual');
+  document.getElementById('tab-preset-btn').classList.toggle('active', tab==='preset');
+}
+
+function loadPreset(name) {
+  activeRoles = []; colorIdx = 0;
+  PRESETS[name].forEach(([sector, role, side]) => {
+    const data = SECTORS[sector]?.[role]; if(!data) return;
+    const color = COLORS[colorIdx % COLORS.length]; colorIdx++;
+    activeRoles.push({
+      sector, role, side, color,
+      home:  applySlot(data.home,  side),
+      moves: applySlot(data.moves, side),
+      okay:  applySlot(data.okay,  side),
+    });
+  });
+  renderAll();
+  switchTab('manual');
+}
+
+// Wire preset buttons
+const pg = document.getElementById('preset-grid');
+Object.keys(PRESETS).forEach(name => {
+  const btn = document.createElement('div');
+  btn.style.cssText = 'background:#181818;border:1px solid #2a2a2a;border-radius:4px;padding:8px 6px;font-family:monospace;font-size:0.65rem;color:#888;cursor:pointer;text-align:center;transition:all 0.15s';
+  btn.textContent = name;
+  btn.onmouseover = () => { btn.style.borderColor='#e8c84a'; btn.style.color='#e8c84a'; };
+  btn.onmouseout  = () => { btn.style.borderColor='#2a2a2a'; btn.style.color='#888'; };
+  btn.onclick = () => loadPreset(name);
+  pg.appendChild(btn);
+});
+
+function syncButtons() {
+  document.querySelectorAll('.men-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.men === currentMentality));
+  document.querySelectorAll('.vtog').forEach(b =>
+    b.classList.toggle('active', b.dataset.v === currentView));
+}
+
+function renderTags() {
+  const el = document.getElementById('role-list');
+  if(!activeRoles.length) {
+    el.innerHTML = '<span class="empty-state">No players added yet — build your lineup above</span>';
+    return;
+  }
+  const SL = {L:'LEFT', R:'RIGHT', C:'CTR'};
+  el.innerHTML = activeRoles.map((r, i) => {
+    const ipfPct  = calcLikelihood(r, 'IPF');
+    const oopfPct = calcLikelihood(r, 'OOPF');
+    const lhtml = currentMentality ? `
+      <span class="side-badge" style="color:${likelihoodColor(ipfPct)};background:#1a1a1a" title="Gets forward ${ipfPct}% of the time">↑ ${ipfPct}%</span>
+      <span class="side-badge" style="color:${likelihoodColor(oopfPct)};background:#1a1a1a" title="Tracks back ${oopfPct}% of the time">↓ ${oopfPct}%</span>` : '';
+    return `<div class="role-tag">
+      <div class="dot" style="background:${r.color}"></div>
+      <span>${r.role}</span>
+      <span class="side-badge">${SL[r.side]}</span>
+      ${lhtml}
+      <span class="rm" onclick="removeRole(${i})" title="Remove">✕</span>
+    </div>`;
+  }).join('');
+}
+
+function renderGrid() {
+  
+  ALL_ZONES.forEach(z => {
+    const el = document.getElementById(z); if(!el) return;
+    el.className = el.className.replace(/\b(sole|shared|crowded|dead|ipf-\w+|oopf-\w+)\b/g, '').trim();
+    const d = document.getElementById('d' + z.replace('z','')); if(d) d.innerHTML = '';
+  });
+  if(!activeRoles.length) return;
+
+  const prefix      = currentView === 'IPF' ? 'ipf-' : currentView === 'OOPF' ? 'oopf-' : '';
+  const displayList = getDisplayZones();
+
+  
+  const zr = {};
+  ALL_ZONES.forEach(z => zr[z] = []);
+  displayList.forEach(({r, zones}) => zones.forEach(z => { if(zr[z]) zr[z].push(r); }));
+
+  
+  const zrCount = {};
+  ALL_ZONES.forEach(z => zrCount[z] = 0);
+  displayList.forEach(({r, zones}) => {
+    if(r.role === 'GK' || r.role === 'SK') return;
+    zones.forEach(z => { if(z in zrCount) zrCount[z]++; });
+  });
+  const crowdedZones = new Set(ALL_ZONES.filter(z => zrCount[z] >= 3));
+
+  
+  ALL_ZONES.forEach(z => {
+    const el    = document.getElementById(z); if(!el) return;
+    const roles = zr[z];
+    if(!roles.length)            el.classList.add(prefix + 'dead');
+    else if(crowdedZones.has(z)) el.classList.add(prefix + 'crowded');
+    else if(roles.length === 1)  el.classList.add(prefix + 'sole');
+    else                         el.classList.add(prefix + 'shared');
+
+    const d = document.getElementById('d' + z.replace('z',''));
+    if(d) d.innerHTML = roles.map(r =>
+      `<div class="zdot" style="background:${r.color}" title="${r.role} (${r.side})"></div>`
+    ).join('');
+  });
+
+  // ── Instruction-based zone overlays ─────────────────────────
+  // Through Balls + High Line on OOPF → highlight exposed zones behind the line
+  // These are the zones an opponent's fast striker would run into
+  if(currentView === 'OOPF' && instrState.ft_row2 === 'through-balls' && instrState.dline === 'high') {
+    const exposedZones = ['z16','z17a','z17bc','z18a','z18b','z19a','z19bc','z20','z11','z12','z13','z14','z15'];
+    exposedZones.forEach(z => {
+      const el = document.getElementById(z); if(!el) return;
+      if(zr[z] && zr[z].length === 0) {
+        el.style.outline = '2px solid rgba(255,80,80,0.6)';
+        el.style.background = 'rgba(255,30,30,0.08)';
+        el.title = '⚠️ Exposed zone — Through Balls + High Line leaves this area vulnerable';
+      }
+    });
+  } else {
+    // Clear any previous exposure highlights
+    ALL_ZONES.forEach(z => {
+      const el = document.getElementById(z); if(!el) return;
+      el.style.outline = '';
+      el.style.background = '';
+    });
+  }
+}
+
+function renderAnalysis() {
+  const el = document.getElementById('analysis');
+  if(activeRoles.length < 2) {
+    el.innerHTML = '<div class="empty-state" style="grid-column:1/-1">Add at least 2 players, then pick a game plan to see your tactical analysis</div>';
+    return;
+  }
+
+  
+  function buildZR(view) {
+    const zr = {}; ALL_ZONES.forEach(z => zr[z] = []);
+    const cfg = currentMentality ? MENTALITY_CONFIG[currentMentality] : null;
+    const sideOk = (z, side) => {
+      if(side === 'L') return L_ZONES.has(z) || isCenter(z);
+      if(side === 'R') return R_ZONES.has(z) || isCenter(z);
+      return true;
+    };
+    activeRoles.forEach(r => {
+      let zones;
+      if(!cfg || view === 'START') zones = getRoleZonesFull(r).filter(z => sideOk(z, r.side));
+      else if(view === 'OOPF') {
+        const shifted = getShiftedZones(r, 0, 'OOPF');
+        const okayZones = (r.okay || []).filter(z => sideOk(z, r.side));
+        zones = [...new Set([...shifted, ...okayZones])];
+      } else {
+        const shifted = getShiftedZones(r, cfg.ipfShift, 'IPF');
+        const okayZones = (r.okay || []).filter(z => sideOk(z, r.side));
+        zones = [...new Set([...shifted, ...okayZones])];
+      }
+      zones = [...new Set(zones)];
+      zones.forEach(z => { if(zr[z]) zr[z].push(r); });
+    });
+    return zr;
+  }
+
+  const zrIPF  = currentMentality ? buildZR('IPF')  : null;
+  const zrOOPF = currentMentality ? buildZR('OOPF') : null;
+  const zr = currentView === 'IPF' ? zrIPF : currentView === 'OOPF' ? zrOOPF : buildZR('START');
+
+  const covered = ALL_ZONES.filter(z => zr[z].length > 0);
+  const dead    = ALL_ZONES.filter(z => zr[z].length === 0);
+  const sole    = ALL_ZONES.filter(z => zr[z].length === 1);
+  const shared  = ALL_ZONES.filter(z => zr[z].length === 2);
+  const crowded = ALL_ZONES.filter(z => zr[z].length >= 3);
+  const pct     = Math.round(covered.length / ALL_ZONES.length * 100);
+  const lCov    = ALL_ZONES.filter(z => L_ZONES.has(z) && zr[z].length > 0).length;
+  const rCov    = ALL_ZONES.filter(z => R_ZONES.has(z) && zr[z].length > 0).length;
+  const balanced = Math.abs(lCov - rCov) <= 1;
+
+  // Back line detection for display
+  const backLine = detectBackLine();
+  const isBack35 = backLine === 3 || backLine === 5;
+
+  const applyAudit = (currentView === 'IPF' || currentView === 'OOPF') && !!currentMentality;
+  const { issues: auditIssues, passes: auditPasses } = applyAudit
+    ? runPositionalAudit(getDisplayZones(), currentView)
+    : { issues: [], passes: [] };
+
+  // Key combinations
+  const pairMap = {};
+  shared.forEach(z => {
+    const roles = zr[z];
+    for(let i=0;i<roles.length;i++) for(let j=i+1;j<roles.length;j++) {
+      const k = `${roles[i].role}(${roles[i].side}) + ${roles[j].role}(${roles[j].side})`;
+      pairMap[k] = (pairMap[k]||0)+1;
+    }
+  });
+  const topPairs = Object.entries(pairMap).sort((a,b)=>b[1]-a[1]).slice(0,3);
+
+  // Dead zones by third
+  const offD = dead.filter(z => OFF_ZONES.has(z));
+  const midD = dead.filter(z => ['z11','z12','z13','z14','z15','z6','z7','z8','z9','z10'].includes(z));
+  const defD = dead.filter(z => ['z1','z2','z3','z4','z5'].includes(z));
+
+  let html = '';
+
+  const cc = pct >= 75 ? 'green' : pct >= 50 ? 'yellow' : 'red';
+  const barColor = pct >= 75 ? '#55cc77' : pct >= 50 ? '#e8c84a' : '#ff6b6b';
+  const viewLabel = currentView === 'IPF' ? 'With the Ball' : currentView === 'OOPF' ? 'Without the Ball' : 'Starting Shape';
+  const systemTag = isBack35 ? ` · <span style="color:#bb88ff">Back ${backLine}</span>` : '';
+  html += `<div class="acard ${cc}">
+    <div class="atitle">📊 ${viewLabel} — ${pct}%${systemTag}</div>
+    <div style="height:3px;background:#1a1a1a;border-radius:2px;margin:4px 0 6px"><div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px;transition:width 0.4s"></div></div>
+    <ul>
+      <li>${covered.length}/${ALL_ZONES.length} zones · ${sole.length} owned · ${shared.length} shared · ${crowded.length} crowded</li>
+      <li>Left: ${lCov}/9 · Right: ${rCov}/9 · ${balanced ? '✅ Even' : '⚠️ Lopsided'}</li>
+    </ul>
+  </div>`;
+
+  // Morphing gap
+  if(zrIPF && zrOOPF) {
+    const ipfOcc = new Set(), oopfOcc = new Set();
+    ALL_ZONES.forEach(z => {
+      if(zrIPF[z].some(r => r.role!=='GK'&&r.role!=='SK'))  ipfOcc.add(z);
+      if(zrOOPF[z].some(r => r.role!=='GK'&&r.role!=='SK')) oopfOcc.add(z);
+    });
+    const ipfOnly  = [...ipfOcc].filter(z=>!oopfOcc.has(z));
+    const oopfOnly = [...oopfOcc].filter(z=>!ipfOcc.has(z));
+    const gapSize  = ipfOnly.length + oopfOnly.length;
+    const total    = new Set([...ipfOcc,...oopfOcc]).size;
+    const ratio    = total>0 ? Math.round(gapSize/total*100) : 0;
+    const fmt      = zs => zs.length===0?'none':zs.map(z=>z.replace('z','')).sort((a,b)=>parseInt(a)-parseInt(b)).join(', ');
+    let gLabel,gColor,gNote;
+    if(gapSize<=3)       {gLabel='Very Small';gColor='green'; gNote='Shape barely changes — smooth transitions';}
+    else if(gapSize<=6)  {gLabel='Small';     gColor='green'; gNote='Minimal change — well-drilled team handles this';}
+    else if(gapSize<=10) {gLabel='Moderate';  gColor='yellow';gNote='Some shape change — needs fit, organised players';}
+    else                 {gLabel='Large';      gColor='red';   gNote='Big difference — vulnerable on transitions';}
+    html += `<div class="acard ${gColor}">
+      <div class="atitle">↔️ Shape Change — ${gLabel} (${ratio}%)</div>
+      <ul>
+        <li><span style="color:#77ee99">🟢 Attack only:</span> zones ${fmt(ipfOnly)}</li>
+        <li><span style="color:#ffaa66">🟠 Defence only:</span> zones ${fmt(oopfOnly)}</li>
+        <li>${gNote}</li>
+      </ul>
+    </div>`;
+  }
+
+  if(applyAudit) {
+    if(auditIssues.length > 0) {
+      html += `<div class="acard red">
+        <div class="atitle">🚨 Things to fix (${auditIssues.length})</div>
+        <ul>${auditIssues.map(i=>`<li>${i}</li>`).join('')}</ul>
+      </div>`;
+    }
+    if(auditPasses.length > 0) {
+      html += `<div class="acard green">
+        <div class="atitle">✅ Looking good</div>
+        <ul>${auditPasses.map(p=>`<li>${p}</li>`).join('')}</ul>
+      </div>`;
+    }
+  }
+
+  if(topPairs.length) {
+    html += `<div class="acard yellow">
+      <div class="atitle">🤝 Key Combos</div>
+      <ul>${topPairs.map(([p,c])=>`<li>${p} <span style="color:#555">(${c} zone${c>1?'s':''})</span></li>`).join('')}</ul>
+    </div>`;
+  }
+
+  if(dead.length) {
+    const dl = [];
+    if(offD.length) dl.push(`Final third: zones ${offD.map(z=>z.replace('z','')).join(', ')}`);
+    if(midD.length) dl.push(`Midfield: zones ${midD.map(z=>z.replace('z','')).join(', ')}`);
+    if(defD.length) dl.push(`Defensive: zones ${defD.map(z=>z.replace('z','')).join(', ')}`);
+    html += `<div class="acard blue">
+      <div class="atitle">🕳 No Cover (${dead.length} zones)</div>
+      <ul>${dl.map(d=>`<li>${d}</li>`).join('')}</ul>
+    </div>`;
+  }
+  if(!currentMentality) {
+    html += `<div class="acard purple">
+      <div class="atitle">💡 How to read this</div>
+      <ul>
+        <li>Pick a <b>game plan</b> to see your shape change live</li>
+        <li>Switch between <b>With the Ball</b> and <b>Without the Ball</b> to see both shapes</li>
+        <li>🟢 Green = 1 player there · 🟡 Yellow = 2 players sharing · 🔴 Red = too many</li>
+        <li>Each player tag shows how likely they are to actually get to their zone</li>
+      </ul>
+    </div>`;
+  } else {
+    const activeView = currentView === 'OOPF' ? 'OOPF' : 'IPF';
+    const cfg = MENTALITY_CONFIG[currentMentality] || { ipfShift:1, oopfDrop:1, oopfPress:0 };
+
+    const getRoleShift = r => {
+      const mob  = MOBILITY[r.role] || 2;
+      if(activeView === 'OOPF') {
+        const type = OOPF_ROLE_TYPE[r.role] || 'mid';
+        if(type === 'def') return -Math.round(cfg.oopfDrop * (mob/3));
+        if(type === 'att') return  Math.round(cfg.oopfPress * (mob/3));
+        return -Math.round((cfg.oopfDrop * 0.4) * (mob/3));
+      }
+      return Math.round(cfg.ipfShift * (mob/3));
+    };
+
+    
+    const unreliable = activeRoles.filter(r => calcLikelihood(r, activeView) < 40 && getRoleShift(r) !== 0);
+    const reliable   = activeRoles.filter(r => calcLikelihood(r, activeView) >= 70 && getRoleShift(r) !== 0);
+
+    if(unreliable.length) {
+      html += `<div class="acard red">
+        <div class="atitle">⚠️ Might not get there (${activeView === 'IPF' ? '↑ attacking' : '↓ defending'})</div>
+        <ul>${unreliable.map(r => `<li>${r.role} (${r.side}) — ${calcLikelihood(r,activeView)}% — probably won't reach their spot</li>`).join('')}</ul>
+      </div>`;
+    }
+    if(reliable.length) {
+      html += `<div class="acard green">
+        <div class="atitle">✅ Doing their job reliably (${activeView === 'IPF' ? '↑ gets forward' : '↓ tracks back'})</div>
+        <ul>${reliable.map(r => `<li>${r.role} (${r.side}) — ${calcLikelihood(r,activeView)}%</li>`).join('')}</ul>
+      </div>`;
+    }
+  }
+
+  // ── Verdict ────────────────────────────────────────────────
+  html += renderVerdict();
+
+  el.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INSTRUCTION STATE — must be declared before renderAll
+// ═══════════════════════════════════════════════════════════════
+const instrState = {
+  // Shape
+  width:      null, // 'narrow' | 'balanced' | 'wide'
+  tempo:      null, // 'slow' | 'normal' | 'fast'
+  freedom:    null, // 'disciplined' | 'balanced' | 'expressive'
+  // Defence
+  dline:      null, // 'deep' | 'balanced' | 'high'
+  closing:    null, // 'sit' | 'ownhalf' | 'allover'
+  tackling:   null, // 'cautious' | 'normal' | 'committed'
+  offside:    null, // 'no' | 'yes'
+  // Attack
+  passing:    null, // 'short' | 'mixed' | 'direct' | 'long'
+  focus:      null, // 'left' | 'centre' | 'right' | 'flanks' | 'mixed'
+  gkdist:     null, // 'short' | 'mixed' | 'long'
+  // Final Third — row-pair: each row is null or a selection
+  ft_row0:    null, // 'early-crosses' | 'look-overlap'
+  ft_row1:    null, // 'shoot-on-sight' | 'work-into-box'
+  ft_row2:    null, // 'run-at-defence' | 'through-balls'
+};
+
+function renderAll() { renderTags(); renderGrid(); renderAnalysis(); syncButtons(); }
+
+function setInstr(grp, val) {
+  instrState[grp] = instrState[grp] === val ? null : val;
+  document.querySelectorAll(`.iopt[data-grp="${grp}"]`).forEach(el => {
+    el.classList.toggle('active', el.dataset.val === instrState[grp]);
+  });
+  renderAnalysis();
+  syncButtons();
+}
+
+function setInstrFT(row, val) {
+  instrState[row] = instrState[row] === val ? null : val;
+  document.querySelectorAll(`.iopt[data-grp="${row}"]`).forEach(el => {
+    el.classList.toggle('active', el.dataset.val === instrState[row]);
+  });
+  renderAnalysis();
+  syncButtons();
+}
+
+function hasInstr(grp, val) { return instrState[grp] === val; }
+function instrIs(grp, ...vals) { return vals.includes(instrState[grp]); }
+function ftHas(val) { return instrState.ft_row0===val||instrState.ft_row1===val||instrState.ft_row2===val; }
+
+// ═══════════════════════════════════════════════════════════════
+// VERDICT ENGINE — reads roles + instructions together
+// ═══════════════════════════════════════════════════════════════
+function buildPrimeVerdict() {
+  const men = currentMentality;
+  const h = (grp, ...vals) => instrIs(grp, ...vals);
+  const ft = (val) => ftHas(val);
+
+  // ── Derived flags ──────────────────────────────────────────
+  const isHigh    = h('dline','high') || h('closing','allover');
+  const isDeep    = h('dline','deep') || h('closing','sit');
+  const isDirect  = h('passing','direct') || h('passing','long') || ft('through-balls') || men==='Counter';
+  const isShort   = h('passing','short') || h('tempo','slow');
+  const isFast    = h('tempo','fast') || men==='Attacking' || men==='Overload';
+  const isWide    = h('width','wide') || ft('early-crosses') || ft('look-overlap');
+  const isNarrow  = h('width','narrow') || h('focus','centre');
+  const isAttk    = men==='Attacking' || men==='Overload';
+  const isDef     = men==='Defensive' || men==='Contain';
+  const isExpr    = h('freedom','expressive');
+  const isDisc    = h('freedom','disciplined');
+  const hasAnyInstr = men || Object.values(instrState).some(v=>v!==null);
+
+  // ── Style identity ─────────────────────────────────────────
+  let style='No Game Plan', styleColor='#444', styleDesc='Pick a mentality and instructions';
+  const isContradictory = (isHigh && isDeep) || (isAttk && isDef) ||
+    (h('dline','high') && h('closing','sit')) ||
+    (men==='Contain' && isHigh) ||
+    (men==='Overload' && isDeep);
+
+  if(hasAnyInstr) {
+    if(isContradictory)
+      { style='Contradictory'; styleColor='#ff3333'; styleDesc='Instructions pulling in opposite directions'; }
+    else if(men==='Overload')
+      { style='Total Attack'; styleColor='#ff3333'; styleDesc='Maximum commitment — dangerous and wide open'; }
+    else if(men==='Attacking' && isHigh && isFast)
+      { style='Gegenpress'; styleColor='#ff6644'; styleDesc='Win it high, go immediately — no rest'; }
+    else if(men==='Attacking' && isWide)
+      { style='Expansive Attack'; styleColor='#ff8844'; styleDesc='Wide, aggressive, creating from all areas'; }
+    else if(men==='Attacking')
+      { style='Attacking'; styleColor='#ff9944'; styleDesc='Forward-oriented, accept defensive risk'; }
+    else if(isDeep && isDirect && (men==='Counter'||ft('through-balls')))
+      { style='Counter-Attack'; styleColor='#cc44ff'; styleDesc='Absorb, win it, release quickly in behind'; }
+    else if(isDeep && isDef)
+      { style='Low Block'; styleColor='#5577cc'; styleDesc='Compact, hard to beat, hard to play through'; }
+    else if(isShort && isHigh)
+      { style='Positional Play'; styleColor='#33aaff'; styleDesc='Press high, play short, dominate territory'; }
+    else if(isShort && !isHigh)
+      { style='Possession'; styleColor='#00dd77'; styleDesc='Patient, technical, control through the ball'; }
+    else if(isHigh && isDirect)
+      { style='High Press / Direct'; styleColor='#ffcc00'; styleDesc='Win it high, go direct immediately'; }
+    else if(isHigh)
+      { style='High Block'; styleColor='#ffaa44'; styleDesc='Aggressive line, compact shape'; }
+    else if(men==='Counter')
+      { style='Counter-Attack'; styleColor='#cc44ff'; styleDesc='Deep shape, fast vertical transitions'; }
+    else if(men==='Control')
+      { style='Controlled'; styleColor='#44ddcc'; styleDesc='Possession with purpose — build and probe'; }
+    else if(men==='Defensive')
+      { style='Defensive'; styleColor='#5577cc'; styleDesc='Cautious, organised, hard to break down'; }
+    else if(men==='Contain')
+      { style='Contain'; styleColor='#336699'; styleDesc='Deep, passive, protect the result'; }
+    else if(men==='Balanced')
+      { style='Balanced'; styleColor='#888'; styleDesc='Neutral identity — adaptable to game state'; }
+    else
+      { style='Mixed'; styleColor='#666'; styleDesc='Multiple layers — define a clearer core direction'; }
+  }
+
+  // ── Role data ──────────────────────────────────────────────
+  const roleNames = activeRoles.map(r => r.role);
+  const hasWB     = roleNames.some(r => ['WB','IWB','DFB','FB'].includes(r));
+  const hasWing   = roleNames.some(r => ['Winger','Inside Forward','Inverted Winger','Defensive Winger','Wide Mid'].includes(r));
+  const hasTF     = roleNames.some(r => ['Target Forward','Complete Forward'].includes(r));
+  const hasPF     = roleNames.some(r => r === 'Pressing Forward');
+  const hasAF     = roleNames.some(r => ['Advanced Forward','Poacher','Shadow Striker','Trequartista'].includes(r));
+  const hasBBM    = roleNames.some(r => ['BBM','BBM (Deep)'].includes(r));
+  const hasLibero = roleNames.some(r => r === 'Libero');
+  const hasSK     = roleNames.some(r => r === 'SK');
+  const hasDLP    = roleNames.some(r => r.includes('DLP'));
+  const hasAP     = roleNames.some(r => r === 'AP');
+
+  // ── Attack profile ─────────────────────────────────────────
+  const atkProfile = [];
+
+  // From instructions
+  if(ft('early-crosses'))    atkProfile.push('Early crosses into the box — bypass organised defence');
+  if(ft('look-overlap'))     atkProfile.push('Overlapping runs on the flank — creates 2v1, draws defenders wide');
+  if(ft('shoot-on-sight'))   atkProfile.push('Shots from range — volume of attempts, GK under pressure');
+  if(ft('work-into-box'))    atkProfile.push('Patient final third — waits for a clear chance inside the box');
+  if(ft('run-at-defence'))   atkProfile.push('Dribblers running at defenders — forces errors and fouls');
+  if(ft('through-balls'))    atkProfile.push('Balls in behind — exploits high lines and defensive space');
+  if(h('passing','direct'))  atkProfile.push('Direct passing — skips midfield, quick vertical transitions');
+  if(h('passing','long'))    atkProfile.push('Long switches — changes point of attack quickly');
+  if(h('passing','short'))   atkProfile.push('Short passing — possession cycles, retain the ball');
+  if(h('focus','left'))      atkProfile.push('Left-channel overload — everything through the left side');
+  if(h('focus','right'))     atkProfile.push('Right-channel overload — everything through the right side');
+  if(h('focus','centre'))    atkProfile.push('Central overload — tight combinations through the middle');
+  if(h('focus','flanks'))    atkProfile.push('Dual flank width — stretches opposition simultaneously');
+  if(h('gkdist','short'))    atkProfile.push('GK plays short — initiates build-up, invites opposition press');
+  if(h('gkdist','long'))     atkProfile.push('GK launches long — bypasses press, targets aerial players');
+
+  // From roles
+  if(isWide && hasWB)        atkProfile.push('Fullback/WB overlap — width and crossing from deep');
+  if(isWide && hasWing)      atkProfile.push('Wide players stretching the pitch — pace and delivery');
+  if(hasTF)                  atkProfile.push('Target forward as aerial focal point — hold-up and flick-ons');
+  if(hasAF && isFast)        atkProfile.push('Fast attacker exploiting space in behind');
+  if(hasBBM)                 atkProfile.push('Box-to-box runner arriving late — secondary scoring threat');
+  if(isHigh && hasPF)        atkProfile.push('Pressing forward triggers high press — wins ball dangerously high');
+  if(hasSK)                  atkProfile.push('SK plays out short — controlled build-up from goalkeeper');
+  if(hasLibero)              atkProfile.push('Libero drives into midfield — creates numerical overloads');
+  if(hasDLP||hasAP)          atkProfile.push('Deep playmaker dictating tempo and direction of play');
+
+  if(!atkProfile.length)     atkProfile.push('No attacking pattern detected — add instructions and roles');
+
+  // ── Defence profile ────────────────────────────────────────
+  const defProfile = [];
+  if(isHigh)                        defProfile.push('High defensive line — compact, catches attackers offside');
+  if(isDeep)                        defProfile.push('Deep block — absorbs pressure, hard to get behind');
+  if(h('closing','allover'))        defProfile.push('All-over pressing — wins ball in dangerous positions');
+  if(h('closing','sit'))            defProfile.push('Passive shape — holds position, waits for the ball');
+  if(h('closing','ownhalf'))        defProfile.push('Mid-block — engages only when ball enters own half');
+  if(h('tackling','committed'))     defProfile.push('Aggressive tackling — physical, wins duels, risks cards');
+  if(h('tackling','cautious'))      defProfile.push('Cautious tackling — jockeys, avoids fouls, stays solid');
+  if(h('offside','yes'))            defProfile.push('Coordinated offside trap — requires total defensive sync');
+  if(!defProfile.length)            defProfile.push('Standard defensive shape — no specific instruction set');
+
+  // ── Vulnerabilities ────────────────────────────────────────
+  const vulns = [];
+  if(isHigh)                        vulns.push('Pace in behind — fast striker runs onto balls past your line');
+  if(h('offside','yes') && !isHigh) vulns.push('Offside trap without high line — defenders out of sync');
+  if(isDeep && isDef)               vulns.push('Patient possession teams — given time in front of your block');
+  if(isWide)                        vulns.push('Central counter — wide shape leaves gaps between players');
+  if(isNarrow)                      vulns.push('Wide play — flanks open, opposition crosses freely');
+  if(h('closing','allover'))        vulns.push('Technical teams break the press easily with quick passing');
+  if(isExpr)                        vulns.push('Shape breaks — players go freelance, defensive structure lost');
+  if(ft('through-balls') && isHigh) vulns.push('Counter with pace — if through ball is intercepted, massive space behind');
+  if(men==='Overload'||(isAttk&&h('closing','allover')))
+                                    vulns.push('Any counter — no cover behind, one turnover = clear chance');
+  if(h('tackling','committed'))     vulns.push('Technical dribblers who draw fouls — card accumulation');
+  if(!vulns.length)                 vulns.push('No specific vulnerability from current setup');
+
+  // ── What beats this ────────────────────────────────────────
+  const beatenBy = [];
+  if(isHigh && h('closing','allover'))
+    beatenBy.push('A calm technical midfielder who breaks the press — space behind line is massive');
+  if(isDeep && isDef)
+    beatenBy.push('Patient possession team with Through Balls — slowly unpicks the block');
+  if(isWide || ft('early-crosses'))
+    beatenBy.push('Narrow block with dominant aerial CBs — neutralises your crossing game');
+  if(isExpr)
+    beatenBy.push('Disciplined pressing team — wins the ball when your shape collapses');
+  if(ft('shoot-on-sight'))
+    beatenBy.push('Strong goalkeeper and organised block — absorbs low-quality shots comfortably');
+  if(h('passing','short') && !isHigh)
+    beatenBy.push('High press team — traps your slow build-up and wins it dangerously close to goal');
+  if(!beatenBy.length)
+    beatenBy.push('Balanced setup — no single opponent type specifically exploits this');
+
+  // ── Conflicts ──────────────────────────────────────────────
+  const conflicts = [];
+  if(isHigh && isDeep)              conflicts.push('High Line + Deep Block — contradictory defensive positions');
+  if(isAttk && isDef)               conflicts.push(men+' + defensive instructions — opposite directions');
+  if(h('dline','high')&&h('closing','sit')) conflicts.push('High Line + Sit Back — line high, nobody presses');
+  if(isExpr && isDisc)              conflicts.push('Expressive + Disciplined Freedom — contradictory');
+  if(men==='Contain' && isHigh)     conflicts.push('Contain + High Line — Contain requires a deep shape');
+  if(men==='Overload' && isDeep)    conflicts.push('Overload + Deep Line — Overload pushes everyone forward');
+  if(h('passing','short')&&h('passing','long')) conflicts.push('Short + Long Passing — contradictory');
+  if(ft('work-into-box')&&ft('through-balls')) conflicts.push('Work into Box + Through Balls — opposite final third approaches');
+  if(ft('shoot-on-sight')&&ft('work-into-box')) conflicts.push('Shoot on Sight + Work into Box — contradictory shooting philosophy');
+  if(h('gkdist','long') && h('passing','short')) conflicts.push('Long GK Distribution + Short Passing — GK goes long but outfield plays short');
+
+  const healthPct = Math.max(10, Math.round(100 - conflicts.length * 18));
+
+  return { style, styleColor, styleDesc, healthPct, conflicts, atkProfile, defProfile, vulns, beatenBy };
+}
+
+function renderVerdict() {
+  if(!currentMentality && !Object.values(instrState).some(v=>v!==null)) return '';
+  const v = buildPrimeVerdict();
+  if(!v) return '';
+  const hColor = v.healthPct>=70?'#55cc77':v.healthPct>=45?'#e8c84a':'#ff6b6b';
+  const hLabel = v.healthPct>=70?'Coherent':v.healthPct>=45?'Conflicts':'Contradictory';
+  const identityCard = `<div class="verdict-card" style="border-color:${v.styleColor}33;grid-column:1/-1">
+    <div class="vt-title" style="color:${v.styleColor}">🎯 ${currentView==='START'?'Identity':currentView==='IPF'?'With the Ball':'Without the Ball'}</div>
+    <div class="vt-style" style="background:${v.styleColor}22;border:1px solid ${v.styleColor};color:${v.styleColor}">${v.style}</div>
+    <div class="vt-item" style="color:#777;margin-bottom:8px">${v.styleDesc}</div>
+    <div class="vt-title" style="color:${hColor}">🔧 ${hLabel} (${v.healthPct}%)</div>
+    <div class="vt-bar-wrap"><div class="vt-bar" style="width:${v.healthPct}%;background:${hColor}"></div></div>
+    ${v.conflicts.map(c=>`<div class="vt-item neg">⚡ ${c}</div>`).join('')}
+    ${!v.conflicts.length?'<div class="vt-item pos">✅ No conflicts</div>':''}
+  </div>`;
+
+  if(currentView==='IPF') {
+    return identityCard +
+      `<div class="verdict-card" style="border-color:#1a3a1a;grid-column:1/-1">
+        <div class="vt-title" style="color:#55cc77">⚽ With the Ball — How you'll score</div>
+        ${v.atkProfile.map(a=>`<div class="vt-item pos">→ ${a}</div>`).join('')}
+      </div>` +
+      `<div class="verdict-card" style="border-color:#3a1111;grid-column:1/-1">
+        <div class="vt-title" style="color:#ff6b6b">⚠️ Attacking exposure</div>
+        ${v.vulns.filter(u=>u.includes('press')||u.includes('counter')||u.includes('intercep')).map(u=>`<div class="vt-item neg">• ${u}</div>`).join('') || '<div class="vt-item" style="color:#444">No specific attacking vulnerability</div>'}
+      </div>`;
+  }
+
+  if(currentView==='OOPF') {
+    const tbWarn = instrState.ft_row2==='through-balls' && instrState.dline==='high'
+      ? '<div class="vt-item neg" style="margin-top:6px">⚠️ Through Balls + High Line — red zones on pitch show exposure</div>' : '';
+    return identityCard +
+      `<div class="verdict-card" style="border-color:#112233;grid-column:1/-1">
+        <div class="vt-title" style="color:#77aaff">🛡 Without the Ball — How you'll defend</div>
+        ${v.defProfile.map(d=>`<div class="vt-item tip">→ ${d}</div>`).join('')}
+        ${tbWarn}
+      </div>` +
+      `<div class="verdict-card" style="border-color:#3a1111;grid-column:1/-1">
+        <div class="vt-title" style="color:#ff6b6b">⚠️ Vulnerabilities</div>
+        ${v.vulns.map(u=>`<div class="vt-item neg">• ${u}</div>`).join('')}
+      </div>` +
+      `<div class="verdict-card" style="border-color:#221133;grid-column:1/-1">
+        <div class="vt-title" style="color:#aa77ff">👁 What beats this</div>
+        ${v.beatenBy.map(b=>`<div class="vt-item ref">• ${b}</div>`).join('')}
+      </div>`;
+  }
+
+  // START view — full overview
+  return identityCard +
+    `<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;grid-column:1/-1">
+      <div class="verdict-card" style="border-color:#1a3a1a">
+        <div class="vt-title" style="color:#55cc77">⚽ Attack</div>
+        ${v.atkProfile.slice(0,4).map(a=>`<div class="vt-item pos">→ ${a}</div>`).join('')}
+        ${v.atkProfile.length>4?`<div class="vt-item" style="color:#555">+${v.atkProfile.length-4} more</div>`:''}
+      </div>
+      <div class="verdict-card" style="border-color:#112233">
+        <div class="vt-title" style="color:#77aaff">🛡 Defence</div>
+        ${v.defProfile.map(d=>`<div class="vt-item tip">→ ${d}</div>`).join('')}
+      </div>
+    </div>` +
+    `<div class="verdict-card" style="border-color:#3a1111;grid-column:1/-1">
+      <div class="vt-title" style="color:#ff6b6b">⚠️ Vulnerabilities</div>
+      ${v.vulns.map(u=>`<div class="vt-item neg">• ${u}</div>`).join('')}
+    </div>` +
+    `<div class="verdict-card" style="border-color:#221133;grid-column:1/-1">
+      <div class="vt-title" style="color:#aa77ff">👁 What beats this</div>
+      ${v.beatenBy.map(b=>`<div class="vt-item ref">• ${b}</div>`).join('')}
+    </div>`;
+}
+
+renderAll();
+syncButtons();
+</script>
+
+<script>
+if('serviceWorker' in navigator) {
+  const sw = `
+    const CACHE = 'fm-tools-v1';
+    self.addEventListener('install', e => {
+      e.waitUntil(caches.open(CACHE).then(c => c.addAll(['./', self.location.href])));
+      self.skipWaiting();
+    });
+    self.addEventListener('activate', e => {
+      e.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))));
+      self.clients.claim();
+    });
+    self.addEventListener('fetch', e => {
+      e.respondWith(caches.match(e.request).then(r => r || fetch(e.request).then(res => {
+        const clone = res.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+        return res;
+      }).catch(() => caches.match('./'))));
+    });
+  `;
+  const blob = new Blob([sw], {type:'application/javascript'});
+  const url = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(url).then(() => URL.revokeObjectURL(url));
+}
+</script>
+
+</body>
+</html>
